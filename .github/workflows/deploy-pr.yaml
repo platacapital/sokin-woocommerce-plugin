@@ -49,8 +49,8 @@ jobs:
             ADMIN_USER=pr-${{ github.event.number }}
             ADMIN_PASS=${{ secrets.ADMIN_PASS }}
             EOF
-            cp ~/deployments/docker-compose.yml .
-            docker-compose -p pr-${{ github.event.number }} up -d
+            cp ~/deployments-wordpress/docker-compose.yml .
+            docker-compose -p pr-${{ github.event.number }} up -d --pull always --force-recreate
       - name: Post PR Comment with Deployment URL
         uses: marocchino/sticky-pull-request-comment@v2
         with:
