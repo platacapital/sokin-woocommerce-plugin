@@ -6,8 +6,8 @@ Requires at least: 6.5
 Tested up to: 6.7.1
 Requires PHP: 7.4
 Stable tag: 1.0.3
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+License: MIT
+License URI: License URI: https://opensource.org/licenses/MIT
 
 Easily accept payments on your WordPress site via Sokin Pay payment gateway.
 
