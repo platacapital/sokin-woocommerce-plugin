@@ -1,0 +1,59 @@
+name: Deploy PR Environment
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: pr-deploy
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          dockerfile: tests/Dockerfile
+          tags: ${{ secrets.ECR_URL }}:pr-${{ github.event.number }}
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/deployments-wordpress
+            mkdir -p pr-${{ github.event.number }}
+            cd pr-${{ github.event.number }}
+            cat > .env <<EOF
+            ECR_REPO_URI=${{ secrets.ECR_URL }}
+            IMAGE_TAG=pr-${{ github.event.number }}
+            VIRTUAL_HOST=pr-${{ github.event.number }}.wordpress.develop.sokin.com
+            ADMIN_USER=pr-${{ github.event.number }}
+            ADMIN_PASS=${{ secrets.ADMIN_PASS }}
+            EOF
+            cp ~/deployments/docker-compose.yml .
+            docker-compose -p pr-${{ github.event.number }} up -d
+      - name: Post PR Comment with Deployment URL
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            The PR environment has been deployed and is available at:
+            [http://pr-${{ github.event.number }}.wordpress.develop.sokin.com](http://pr-${{ github.event.number }}.wordpress.develop.sokin.com)
