@@ -44,9 +44,9 @@ if ! wp plugin is-installed woocommerce --allow-root; then
 fi
 
 # Activate your custom plugin.
-if ! wp plugin is-active my-plugin --allow-root; then
+if ! wp plugin is-active sokin-woocommerce-plugin --allow-root; then
     echo "Activating custom plugin..."
-    wp plugin activate my-plugin --allow-root
+    wp plugin activate sokin-woocommerce-plugin --allow-root
 fi
 
 echo "Starting Apache..."
