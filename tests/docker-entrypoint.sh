@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+echo "Ensuring WordPress files are present..."
+
+# If /var/www/html/index.php is missing, copy WordPress core files.
+if [ ! -f /var/www/html/index.php ]; then
+    echo "Copying WordPress core files..."
+    cp -R /usr/src/wordpress/. /var/www/html/
+fi
+
 echo "Waiting for database connection..."
 while ! mysqladmin ping -h"$WORDPRESS_DB_HOST" --silent; do
     sleep 2
@@ -17,7 +25,7 @@ if [ ! -f /var/www/html/wp-config.php ]; then
                      --allow-root
 fi
 
-# Automatically install WordPress if not already installed.
+# Auto-install WordPress if not already installed.
 if ! wp core is-installed --allow-root; then
     echo "Installing WordPress..."
     wp core install --url="$VIRTUAL_HOST" \
@@ -29,7 +37,7 @@ if ! wp core is-installed --allow-root; then
                     --allow-root
 fi
 
-# Install and activate WooCommerce if not already installed.
+# Install and activate WooCommerce if not installed.
 if ! wp plugin is-installed woocommerce --allow-root; then
     echo "Installing and activating WooCommerce..."
     wp plugin install woocommerce --activate --allow-root
