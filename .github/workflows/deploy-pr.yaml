@@ -54,7 +54,7 @@ jobs:
             ADMIN_PASS=${{ secrets.ADMIN_PASS }}
             EOF
             cp ~/deployments-wordpress/docker-compose.yml .
-            docker-compose down && docker-compose pull $$ docker-compose up -d --force-recreate
+            docker-compose down || true && docker-compose pull $$ docker-compose up -d --force-recreate
       - name: Post PR Comment with Deployment URL
         uses: marocchino/sticky-pull-request-comment@v2
         with:

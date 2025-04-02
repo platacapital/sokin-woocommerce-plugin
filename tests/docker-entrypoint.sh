@@ -22,7 +22,12 @@ if [ ! -f /var/www/html/wp-config.php ]; then
                      --dbuser="$WORDPRESS_DB_USER" \
                      --dbpass="$WORDPRESS_DB_PASSWORD" \
                      --dbhost="$WORDPRESS_DB_HOST" \
-                     --allow-root
+                     --allow-root \
+                     --extra-php="<?php 
+                         // Force HTTPS since we’re behind an HTTPS proxy.
+                         $_SERVER['HTTPS'] = 'on'; 
+                         define('FORCE_SSL_ADMIN', true);
+                     ?>"
 fi
 
 # Auto-install WordPress if not already installed.
