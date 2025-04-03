@@ -1,0 +1,7 @@
+.wc_payment_method.payment_method_sokinpay_gateway label img {
+  width: auto;
+  height: auto;
+}
+.wc-payment-gateway-method-name {
+  display: none !important;
+}
