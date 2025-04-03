@@ -55,5 +55,18 @@ echo "Configuring Sokin Pay settings..."
 SETTINGS_JSON="{\"enabled\": \"yes\", \"title\": \"Sokin Pay (Test)\", \"description\": \"Pay via Sokin Test Env\", \"woo_cpay_redirect_url\": \"${SOKIN_REDIRECT_URL:-https://portal.sandbox.sokin.com/sokinpay/customerPay}\", \"woo_cpay_x_api_key\": \"${SOKIN_X_API_KEY:-dummy_api_key}\", \"woo_cpay_api_url\": \"${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}\"}"
 wp option update woocommerce_sokinpay_gateway_settings "$SETTINGS_JSON" --format=json --allow-root
 
+# Import WooCommerce Sample Data
+SAMPLE_CSV="/var/www/html/wp-content/plugins/woocommerce/sample-data/sample_products.csv"
+if [ -f "$SAMPLE_CSV" ]; then
+    echo "Importing WooCommerce sample products from $SAMPLE_CSV..."
+    wp wc --user=$ADMIN_USER product import "$SAMPLE_CSV" --skip-update --allow-root
+else
+    echo "WooCommerce sample product CSV not found at $SAMPLE_CSV. Skipping import."
+fi
+
+# Ensure correct permissions for web server
+echo "Setting file ownership for web server..."
+chown -R www-data:www-data /var/www/html/wp-content
+
 echo "Starting Apache..."
 exec apache2-foreground
