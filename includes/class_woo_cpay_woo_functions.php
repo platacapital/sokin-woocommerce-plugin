@@ -188,16 +188,14 @@ function woo_cpay_init_gateway_class()
 			// delete_option('ced_utk_test');
 			// delete_option('ced_utk_test_2');
 
-			// $ert = get_option('ced_utk_test', "hjkl");
+			//$ert = get_option('ced_utk_test_3', "hjkl");
+			//delete_option('ced_utk_test_3');
 
 			// $ert1 = get_option('ced_utk_test_2', "hjkl");
 
 
 
-			// echo '<pre>';
 			// print_r($ert);
-			// echo "====";
-			// print_r($ert1);
 			// die;
 
 			// This action hook saves the settings
@@ -396,6 +394,8 @@ function custom_return_status_action()
 		function custom_thank_you_message($custom_message, $order)
 		{
 
+			//update_option('ced_utk_test_3', "here");
+
 			$payment_gateway_id = 'sokinpay_gateway';
 
 			// Get an instance of the WC_Payment_Gateways object
@@ -411,22 +411,31 @@ function custom_return_status_action()
 				),
 			);
 
-			$url = $payment_gateway->woo_cpay_api_url . "/orders/" . sanitize_text_field(wp_unslash($_GET['orderId']));
+				$orderId = isset($_GET['orderId']) ? $_GET['orderId'] : "";
 
-			$request = wp_remote_get($url, $args);
+				$status = isset($_GET['status']) ? $_GET['status'] : "";
 
-			if (!is_wp_error($request)) {
-				$res_body = wp_remote_retrieve_body($request);
-				$json_data = json_decode($res_body, true);
+			
 
-				if (strtolower($json_data['data']['order']['payments'][0]['status']) == 'declined') {
-					$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is failed</div>';
+				$url = $payment_gateway->woo_cpay_api_url . "/orders/" . sanitize_text_field(wp_unslash($orderId));
+
+				$request = wp_remote_get($url, $args);
+
+				if (!is_wp_error($request)) {
+					$res_body = wp_remote_retrieve_body($request);
+					$json_data = json_decode($res_body, true);
+
+					if (strtolower($json_data['data']['order']['payments'][0]['status']) == 'declined') {
+						$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is failed</div>';
+					}
 				}
-			}
-			if (wp_unslash($_GET['status'] == 'return')) {
-				$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is Pending payment</div>';
-			}
-			return $custom_message;
+				if (wp_unslash($status == 'return')) {
+					$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is Pending payment</div>';
+				}
+				return $custom_message;
+
+			
+
 		}
 	}
 }
