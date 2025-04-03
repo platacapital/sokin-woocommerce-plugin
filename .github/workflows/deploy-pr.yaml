@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     environment:
       name: pr-deploy
@@ -34,8 +34,12 @@ jobs:
           context: .
           push: true
           file: ./tests/Dockerfile
-          tags: ${{ secrets.ECR_URL }}:pr-${{ github.event.number }}
+          tags: ${{ secrets.ECR_URL }}:pr-${{ github.sha }}
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -48,7 +52,7 @@ jobs:
             cd pr-${{ github.event.number }}
             cat > .env <<EOF
             ECR_REPO_URI=${{ secrets.ECR_URL }}
-            IMAGE_TAG=pr-${{ github.event.number }}
+            IMAGE_TAG=pr-${{ github.sha }}
             VIRTUAL_HOST=pr-${{ github.event.number }}.wordpress.develop.sokin.com
             ADMIN_USER=pr-${{ github.event.number }}
             ADMIN_PASS=${{ secrets.ADMIN_PASS }}
