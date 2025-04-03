@@ -52,7 +52,7 @@ fi
 
 # Configure Sokin Pay Gateway Settings
 echo "Configuring Sokin Pay settings..."
-SETTINGS_JSON='{"enabled": "yes", "title": "Sokin Pay (Test)", "description": "Pay via Sokin Test Env", "woo_cpay_redirect_url": "${SOKIN_REDIRECT_URL:-https://portal.sandbox.sokin.com/sokinpay/customerPay}", "woo_cpay_x_api_key": "${SOKIN_X_API_KEY:-dummy_api_key}", "woo_cpay_api_url": "${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}"}'
+SETTINGS_JSON="{\"enabled\": \"yes\", \"title\": \"Sokin Pay (Test)\", \"description\": \"Pay via Sokin Test Env\", \"woo_cpay_redirect_url\": \"${SOKIN_REDIRECT_URL:-https://portal.sandbox.sokin.com/sokinpay/customerPay}\", \"woo_cpay_x_api_key\": \"${SOKIN_X_API_KEY:-dummy_api_key}\", \"woo_cpay_api_url\": \"${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}\"}"
 wp option update woocommerce_sokinpay_gateway_settings "$SETTINGS_JSON" --format=json --allow-root
 
 echo "Starting Apache..."
