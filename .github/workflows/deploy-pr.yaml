@@ -53,7 +53,7 @@ jobs:
             cat > .env <<EOF
             ECR_REPO_URI=${{ secrets.ECR_URL }}
             IMAGE_TAG=pr-${{ github.sha }}
-            VIRTUAL_HOST=https://pr-${{ github.event.number }}.wordpress.develop.sokin.com
+            VIRTUAL_HOST=pr-${{ github.event.number }}.wordpress.develop.sokin.com
             ADMIN_USER=pr-${{ github.event.number }}
             ADMIN_PASS=${{ secrets.ADMIN_PASS }}
             SOKIN_REDIRECT_URL=${{ secrets.SOKIN_REDIRECT_URL }}
