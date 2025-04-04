@@ -1,0 +1,65 @@
+# docker-compose.yml (place in project root)
+
+version: '3.8' # Optional in V2, but good for clarity
+
+services:
+  db:
+    # Switch to MariaDB 10.6 for native ARM64 support
+    image: mariadb:10.6
+    # platform: linux/amd64 # REMOVED - Not needed for native image
+    volumes:
+      # Persist database data locally using a named volume
+      - db_data:/var/lib/mysql
+    environment:
+      # MariaDB uses MARIADB_ variables, but MYSQL_ also work for compatibility
+      MYSQL_ROOT_PASSWORD: 'changeme_root_pw' # <-- CHANGE THIS!
+      MYSQL_DATABASE: 'wordpress_test'
+      MYSQL_USER: 'wp_user'
+      MYSQL_PASSWORD: 'changeme_wp_pw' # <-- CHANGE THIS!
+      MARIADB_ROOT_PASSWORD: 'changeme_root_pw' # Redundant but explicit
+      MARIADB_DATABASE: 'wordpress_test' # Redundant but explicit
+      MARIADB_USER: 'wp_user' # Redundant but explicit
+      MARIADB_PASSWORD: 'changeme_wp_pw' # Redundant but explicit
+    healthcheck:
+        # Use MariaDB env vars explicitly in healthcheck
+        # Use string format with $$ to ensure shell expansion of variables inside container
+        test: "mysqladmin ping -h localhost -u$$MARIADB_USER -p$$MARIADB_PASSWORD --silent"
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+  wordpress:
+    build:
+      # Assumes this docker-compose.yml is in the project root
+      context: .
+      dockerfile: tests/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy # Wait for db to be ready
+    ports:
+      # Map localhost:8080 to container port 80
+      - "8080:80"
+    volumes:
+       # Map your local plugin code into the container for faster development iteration
+       - .:/var/www/html/wp-content/plugins/sokin-woocommerce-plugin
+       # Persist uploads locally using a named volume
+       - wp_uploads:/var/www/html/wp-content/uploads
+    environment:
+      WORDPRESS_DB_HOST: db:3306 # Use the service name 'db'
+      WORDPRESS_DB_USER: 'wp_user' # Use the same user as defined for the db service
+      WORDPRESS_DB_PASSWORD: 'changeme_wp_pw' # Use the same password as defined for the db service
+      WORDPRESS_DB_NAME: 'wordpress_test' # Use the same database name as defined for the db service
+      ADMIN_USER: 'testadmin' # Username for the WP admin user created by the entrypoint script
+      ADMIN_PASS: 'testpass' # <-- CHANGE THIS (password for the WP admin user)
+      VIRTUAL_HOST: 'http://localhost:8080' # Base URL for WordPress installation
+
+      # Optional: Uncomment and set these to override defaults in docker-entrypoint.sh
+      # SOKIN_REDIRECT_URL: 'your_local_redirect_url'
+      # SOKIN_X_API_KEY: '60G0lLy8I1ySTW7HJZ4BUfi0GK24E92VmORA1IFT'
+      # SOKIN_API_URL: 'your_local_sokin_api_url'
+    restart: unless-stopped
+
+# Define named volumes used by the services above
+volumes:
+  db_data:
+  wp_uploads: 
