@@ -109,6 +109,11 @@ wp-config.php
 # Log files
 *.log
 
+# Local Development Certificates (Self-signed or mkcert)
+*.pem
+*.crt
+*.key
+
 # htaccess
 /.htaccess
 
