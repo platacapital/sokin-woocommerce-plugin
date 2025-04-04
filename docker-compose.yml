@@ -1,6 +1,6 @@
 # docker-compose.yml (place in project root)
 
-version: '3.8' # Optional in V2, but good for clarity
+# version: '3.8' # REMOVED - Obsolete in Docker Compose V2
 
 services:
   db:
@@ -32,17 +32,17 @@ services:
     build:
       # Assumes this docker-compose.yml is in the project root
       context: .
-      dockerfile: tests/Dockerfile
+      dockerfile: tests/Dockerfile # Updated path relative to root
     depends_on:
       db:
         condition: service_healthy # Wait for db to be ready
     ports:
-      # Map localhost:8080 to container port 80
+      # Map localhost:8080 to container port 80 (HTTP) - useful for direct access if needed
       - "8080:80"
     volumes:
-       # Map your local plugin code into the container for faster development iteration
+       # Map local plugin code
        - .:/var/www/html/wp-content/plugins/sokin-woocommerce-plugin
-       # Persist uploads locally using a named volume
+       # Persist uploads
        - wp_uploads:/var/www/html/wp-content/uploads
     environment:
       WORDPRESS_DB_HOST: db:3306 # Use the service name 'db'
@@ -51,12 +51,36 @@ services:
       WORDPRESS_DB_NAME: 'wordpress_test' # Use the same database name as defined for the db service
       ADMIN_USER: 'testadmin' # Username for the WP admin user created by the entrypoint script
       ADMIN_PASS: 'testpass' # <-- CHANGE THIS (password for the WP admin user)
-      VIRTUAL_HOST: 'http://localhost:8080' # Base URL for WordPress installation
+      # VIRTUAL_HOST should be the primary address users access (used for DB options)
+      VIRTUAL_HOST: 'https://localhost:8443' # Keep for wp core install
+
+      # Further Simplification: Rely on entrypoint for $_SERVER['HTTPS'] and FORCE_SSL_ADMIN.
+      # Set ONLY the URL constants.
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME',    'https://localhost:8443');
+        define('WP_SITEURL', 'https://localhost:8443');
 
       # Optional: Uncomment and set these to override defaults in docker-entrypoint.sh
       # SOKIN_REDIRECT_URL: 'your_local_redirect_url'
       # SOKIN_X_API_KEY: 'your_local_sokin_key'
       # SOKIN_API_URL: 'your_local_sokin_api_url'
+    restart: unless-stopped
+
+  # ADDED Nginx reverse proxy service
+  nginx:
+    image: nginx:latest
+    depends_on:
+      - wordpress
+    ports:
+      # Map host port 8443 to Nginx container port 443 (HTTPS)
+      - "8443:443"
+      # Optional: Map host port 8081 to Nginx container port 80 (for HTTP -> HTTPS redirect)
+      # - "8081:80"
+    volumes:
+      # Mount the Nginx configuration (relative to root)
+      - ./local-dev/nginx.conf:/etc/nginx/conf.d/default.conf:ro # Updated path
+      # Mount the SSL certificates (relative to root)
+      - ./local-dev/certs:/etc/nginx/ssl:ro # Updated path
     restart: unless-stopped
 
 # Define named volumes used by the services above
