@@ -55,7 +55,7 @@ services:
 
       # Optional: Uncomment and set these to override defaults in docker-entrypoint.sh
       # SOKIN_REDIRECT_URL: 'your_local_redirect_url'
-      # SOKIN_X_API_KEY: '60G0lLy8I1ySTW7HJZ4BUfi0GK24E92VmORA1IFT'
+      # SOKIN_X_API_KEY: 'your_local_sokin_key'
       # SOKIN_API_URL: 'your_local_sokin_api_url'
     restart: unless-stopped
 
