@@ -1,0 +1,21 @@
+name: Teardown PR Environment
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  teardown:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Teardown via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_SSH_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/deployments/pr-${{ github.event.number }}
+            docker-compose -p pr-${{ github.event.number }} down
+            cd ..
+            rm -rf pr-${{ github.event.number }}
