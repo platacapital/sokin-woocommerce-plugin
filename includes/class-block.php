@@ -24,7 +24,7 @@ final class SokinPay_Blocks_Class extends AbstractPaymentMethodType {
 		'wp-html-entities',
 		'wp-i18n',
 		],
-		null,
+		WC_VERSION,
 		true
 	  );
 		if (function_exists('wp_set_script_translations')) {

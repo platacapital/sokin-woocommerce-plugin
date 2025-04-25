@@ -91,9 +91,9 @@ function sokinpay_create_refund($refund_id, $args) {
 
 // Thank you page
 add_action('woocommerce_thankyou', 'action_woocommerce_thankyou', 10, 1);
-function action_woocommerce_thankyou() {
-
-	if (isset($_REQUEST['orderId']) && '' != $_REQUEST['orderId']) {
+function action_woocommerce_thankyou($order_id) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if (isset($_GET['orderId']) && '' != $_GET['orderId']) {
 
 		$payment_gateway_id = 'sokinpay_gateway';
 
@@ -110,8 +110,8 @@ function action_woocommerce_thankyou() {
 			),
 		);
 
-
-		$url = $payment_gateway->woo_cpay_api_url . '/orders/' . sanitize_text_field(wp_unslash($_REQUEST['orderId']));
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$url = $payment_gateway->woo_cpay_api_url . '/orders/' . sanitize_text_field(wp_unslash($_GET['orderId']));
 
 		$request = wp_remote_get($url, $args);
 
@@ -180,19 +180,6 @@ function woo_cpay_init_gateway_class() {
 			$this->woo_cpay_x_api_key    = $this->get_option('woo_cpay_x_api_key');
 			$this->woo_cpay_api_url      = $this->get_option('woo_cpay_api_url');
 
-			// delete_option('ced_utk_test');
-			// delete_option('ced_utk_test_2');
-
-			//$ert = get_option('ced_utk_test', "hjkl");
-			//delete_option('ced_utk_test_3');
-
-			// $ert1 = get_option('ced_utk_test_2', "hjkl");
-
-
-			/*echo '<pre>';
-			print_r($ert);
-			die;*/
-
 			// This action hook saves the settings
 			add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
 		}
@@ -216,9 +203,9 @@ function woo_cpay_init_gateway_class() {
 					'desc_tip'    => true,
 				),
 				'description' => array(
-					'title'       => __('Description'),
+					'title'       => __('Description', 'sokinpay'),
 					'type'        => 'text',
-					'description' => __('Payment description that the customer will see on your checkout.'),
+					'description' => __('Payment description that the customer will see on your checkout.', 'sokinpay'),
 					'desc_tip'    => true
 				),
 				'woo_cpay_redirect_url' => array(
@@ -381,45 +368,59 @@ function custom_return_status_action() {
 
 		function custom_thank_you_message($custom_message, $order) {
 
-			//update_option('ced_utk_test_3', "here");
+			if (isset($order) && !empty($order)) {
 
-			$payment_gateway_id = 'sokinpay_gateway';
+				$payment_method = $order->get_payment_method();
 
-			// Get an instance of the WC_Payment_Gateways object
-			$payment_gateways = WC_Payment_Gateways::instance();
+				if ('sokinpay_gateway' !=  $payment_method) {
 
-			// Get the desired WC_Payment_Gateway object
-			$payment_gateway = $payment_gateways->payment_gateways()[$payment_gateway_id];
-
-			$args = array(
-				'headers' => array(
-					'x-api-key' => $payment_gateway->settings['woo_cpay_x_api_key'],
-					'Content-Type' => 'application/json'
-				),
-			);
-
-				$orderId = isset($_GET['orderId']) ? sanitize_text_field($_GET['orderId']) : '';
-
-				$status = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
-
-			
-
-				$url = $payment_gateway->woo_cpay_api_url . '/orders/' . sanitize_text_field(wp_unslash($orderId));
-
-				$request = wp_remote_get($url, $args);
-
-			if (!is_wp_error($request)) {
-				$res_body  = wp_remote_retrieve_body($request);
-				$json_data = json_decode($res_body, true);
-
-				if ('declined' == strtolower($json_data['data']['order']['payments'][0]['status'])) {
-					$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is failed</div>';
+					return $custom_message;
 				}
+
+
+				$payment_gateway_id = 'sokinpay_gateway';
+
+				// Get an instance of the WC_Payment_Gateways object
+				$payment_gateways = WC_Payment_Gateways::instance();
+
+				// Get the desired WC_Payment_Gateway object
+				$payment_gateway = $payment_gateways->payment_gateways()[$payment_gateway_id];
+
+				$args = array(
+					'headers' => array(
+						'x-api-key' => $payment_gateway->settings['woo_cpay_x_api_key'],
+						'Content-Type' => 'application/json'
+					),
+				);
+
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$orderId = isset($_GET['orderId']) ? sanitize_text_field(wp_unslash($_GET['orderId'])) : '';
+
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$status = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : '';
+
+				
+
+					$url = $payment_gateway->woo_cpay_api_url . '/orders/' . sanitize_text_field(wp_unslash($orderId));
+
+					$request = wp_remote_get($url, $args);
+
+				if (!is_wp_error($request)) {
+					$res_body  = wp_remote_retrieve_body($request);
+					$json_data = json_decode($res_body, true);
+
+					if ('declined' == strtolower($json_data['data']['order']['payments'][0]['status'])) {
+						$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is failed</div>';
+					}
+				}
+				if (wp_unslash('return' == $status)) {
+					$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is Pending payment</div>';
+				}
+					return $custom_message;
+				
 			}
-			if (wp_unslash('return' == $status)) {
-				$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is Pending payment</div>';
-			}
-				return $custom_message;
+
+
 
 			
 
