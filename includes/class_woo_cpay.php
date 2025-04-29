@@ -3,8 +3,8 @@
 /**
  * The file that defines the core plugin class
  */
-class WooCPay
-{
+class WooCPay {
+
 
 	/**
 	 * The loader is used to maintaining and registering all hooks the plugin.
@@ -13,8 +13,7 @@ class WooCPay
 	protected $plugin_name;
 	protected $version;
 
-	public function __construct()
-	{
+	public function __construct() {
 		if (defined('PLUGIN_NAME_VERSION')) {
 			$this->version = PLUGIN_NAME_VERSION;
 		} else {
@@ -31,8 +30,7 @@ class WooCPay
 	/**
 	 * Load the required dependencies for this plugin.
 	 */
-	private function load_dependencies()
-	{
+	private function load_dependencies() {
 
 		/**
 		 * The class responsible for orchestrating the actions and filters of the core plugin.
@@ -45,10 +43,9 @@ class WooCPay
 	/**
 	 * Define the locale for this plugin for internationalization.
 	 */
-	private function set_locale()
-	{
+	private function set_locale() {
 
-		// $plugin_i18n = new Tsi_Lrs_i18n();
+		// $plugin_i18n = new Tsi_Lrs_I18n();
 
 		// $this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
 
@@ -67,29 +64,25 @@ class WooCPay
 	/**
 	 * Run the loader to execute all of the hooks with WordPress.
 	 */
-	public function run()
-	{
+	public function run() {
 		$this->loader->run();
 	}
 
-	public function get_plugin_name()
-	{
+	public function get_plugin_name() {
 		return $this->plugin_name;
 	}
 
 	/**
 	 * The reference to the class that orchestrates the hooks with the plugin.
 	 */
-	public function get_loader()
-	{
+	public function get_loader() {
 		return $this->loader;
 	}
 
 	/**
 	 * Retrieve the version number of the plugin.
 	 */
-	public function get_version()
-	{
+	public function get_version() {
 		return $this->version;
 	}
 }

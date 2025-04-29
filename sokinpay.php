@@ -4,7 +4,7 @@
  * Plugin Name: Sokin Pay
  * Plugin URI:
  * Description: This plugin seamlessly integrates with your WooCommerce store, providing a secure and efficient way to process payments. Enable a variety of secure payment options, including credit cards and pay by bank.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Sokin
  * Author URI:
  * Requires at least: 6.5
@@ -32,8 +32,7 @@ define('WOO_CUSTOM_PAYMENT', '1.0.3');
 /**
  * The code that runs during plugin activation
  */
-function activate_woo_cpay()
-{
+function activate_woo_cpay() {
 	require_once plugin_dir_path(__FILE__) . 'includes/class_woo_cpay_activator.php';
 	WooCPay_Activator::activate();
 }
@@ -41,8 +40,7 @@ function activate_woo_cpay()
 /**
  * Register the stylesheet
  */
-function register_sokinpay_gateway_styles()
-{
+function register_sokinpay_gateway_styles() {
 	wp_register_style('sokinpay_gateway_style', plugin_dir_url(__FILE__) . 'assets/css/style.css', array(), '1.0.3', 'all');
 	wp_enqueue_style('sokinpay_gateway_style');
 }
@@ -53,8 +51,7 @@ add_action('wp_enqueue_scripts', 'register_sokinpay_gateway_styles');
 /**
  * Register custom javascript file for Admin panel pages use only
  */
-function register_sokinpay_gateway_scripts($hook)
-{
+function register_sokinpay_gateway_scripts($hook) {
 	wp_register_script('sokinpay_gateway_js', plugin_dir_url(__FILE__) . 'includes/js/woo_cpay_js.js', array(), '1.0.3', array('in_footer' => true));
 	wp_enqueue_script('sokinpay_gateway_js');
 }
@@ -65,8 +62,7 @@ add_action('admin_enqueue_scripts', 'register_sokinpay_gateway_scripts');
 /**
  * The code that runs during plugin deactivation.
  */
-function deactivate_woo_cpay()
-{
+function deactivate_woo_cpay() {
 	require_once plugin_dir_path(__FILE__) . 'includes/class_woo_cpay_deactivator.php';
 	WooCPay_Deactivator::deactivate();
 }
@@ -83,8 +79,7 @@ require plugin_dir_path(__FILE__) . 'includes/class_woo_cpay.php';
 /**
  * Function that executes the plugin
  */
-function run_woo_cpay()
-{
+function run_woo_cpay() {
 	require_once plugin_dir_path(__FILE__) . 'includes/class_woo_cpay_woo_functions.php';
 	$plugin = new WooCPay();
 	$plugin->run();
@@ -98,8 +93,7 @@ run_woo_cpay();
 // Checkout Block Support implementation
 add_filter('woocommerce_payment_gateways', 'add_sokinpay_gateway');
 
-function add_sokinpay_gateway($gateways)
-{
+function add_sokinpay_gateway($gateways) {
 	$gateways[] = 'WooCpay_Gateway';
 	return $gateways;
 }
@@ -107,8 +101,7 @@ function add_sokinpay_gateway($gateways)
 /**
  * Custom function to declare compatibility with cart_checkout_blocks feature
  */
-function declare_sokinpay_gateway_cart_checkout_blocks_compatibility()
-{
+function declare_sokinpay_gateway_cart_checkout_blocks_compatibility() {
 	// Check if the required class exists
 	if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
 		// Declare compatibility for 'cart_checkout_blocks'
@@ -123,8 +116,7 @@ add_action('woocommerce_blocks_loaded', 'sokinpay_gateway_register_order_approva
 /**
  * Custom function to register a payment method type
  */
-function sokinpay_gateway_register_order_approval_payment_method_type()
-{
+function sokinpay_gateway_register_order_approval_payment_method_type() {
 	// Check if the required class exists
 	if (! class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
 		return;
@@ -136,7 +128,7 @@ function sokinpay_gateway_register_order_approval_payment_method_type()
 		'woocommerce_blocks_payment_method_type_registration',
 		function (Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry) {
 			// Register an instance of SokinPay_Blocks_Class
-			$payment_method_registry->register(new SokinPay_Blocks_Class);
+			$payment_method_registry->register(new SokinPay_Blocks_Class());
 		}
 	);
 }

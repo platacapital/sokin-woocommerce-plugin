@@ -22,9 +22,8 @@
  * @since      1.0.0
  * @package    Plugin_Name
  * @subpackage Plugin_Name/includes
- * @author     Your Name <email@example.com>
  */
-class Tsi_Lrs_i18n {
+class Tsi_Lrs_I18n {
 
 
 	/**
