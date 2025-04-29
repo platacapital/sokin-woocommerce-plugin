@@ -13,8 +13,8 @@ add_action('woocommerce_refund_created', 'sokinpay_create_refund', 10, 2);
  *
  * @return void
  */
-function sokinpay_create_refund($refund_id, $args)
-{
+function sokinpay_create_refund($refund_id, $args) {
+
 	// Get the refund and order objects
 	$refund = wc_get_order($refund_id);
 
@@ -25,10 +25,10 @@ function sokinpay_create_refund($refund_id, $args)
 	$payment_gateway_id = 'sokinpay_gateway';
 
 	// Get an instance of the WC_Payment_Gateways object
-	$payment_gateways   = WC_Payment_Gateways::instance();
+	$payment_gateways = WC_Payment_Gateways::instance();
 
 	// Get the desired WC_Payment_Gateway object
-	$payment_gateway    = $payment_gateways->payment_gateways()[$payment_gateway_id];
+	$payment_gateway = $payment_gateways->payment_gateways()[$payment_gateway_id];
 
 	// Get Sokin Order Details
 	if ($order->get_meta('orderId')) {
@@ -40,22 +40,23 @@ function sokinpay_create_refund($refund_id, $args)
 		);
 
 		// Order Details API call
-		$order_request_url = $payment_gateway->woo_cpay_api_url . "/orders/" . $order->get_meta('orderId');
-		$order_request = wp_remote_get($order_request_url, $order_args);
+		$order_request_url = $payment_gateway->woo_cpay_api_url . '/orders/' . $order->get_meta('orderId');
+		$order_request     = wp_remote_get($order_request_url, $order_args);
 
 		if (!is_wp_error($order_request)) {
 			$order_res_body = wp_remote_retrieve_body($order_request);
+			
 			$json_data = json_decode($order_res_body, true);
 		}
 
 		// Making Refund Request Body
 		$body = array(
-			"paymentId" => $json_data['data']['order']['payments'][0]['paymentId'],
-			"currency" => $order->get_order_currency(),
-			"amount" => $args['amount'],
-			"description" => $args['reason'],
-			"referenceNo" => gmdate("Ymds"),
-			"memo" => ""
+			'paymentId' => $json_data['data']['order']['payments'][0]['paymentId'],
+			'currency' => $order->get_order_currency(),
+			'amount' => $args['amount'],
+			'description' => $args['reason'],
+			'referenceNo' => gmdate('Ymds'),
+			'memo' => ''
 		);
 
 		// API Headers
@@ -69,13 +70,19 @@ function sokinpay_create_refund($refund_id, $args)
 
 		// Refund API Call
 		$response = wp_remote_post($payment_gateway->woo_cpay_api_url . '/refunds', $header_args);
+
+		//update_option('ced_utk_test', $response);
+
 		if (!is_wp_error($response)) {
 			$res_body = wp_remote_retrieve_body($response);
+
+			//update_option('ced_utk_test_2', $res_body );
+
 			$json_data = json_decode($res_body, true);
 		}
 		// Show error message if we are doing partial payment on same day which is not allowed.
 		// Same day transfer will be fully refunded.
-		if (!$json_data['success'] && $json_data['status'] == 400) {
+		if (!$json_data['success'] && 400 == $json_data['status']) {
 			throw new Exception(esc_attr($json_data['message']));
 			wp_die();
 		}
@@ -84,18 +91,17 @@ function sokinpay_create_refund($refund_id, $args)
 
 // Thank you page
 add_action('woocommerce_thankyou', 'action_woocommerce_thankyou', 10, 1);
-function action_woocommerce_thankyou()
-{
-
-	if (isset($_REQUEST['orderId']) && $_REQUEST['orderId'] != '') {
+function action_woocommerce_thankyou($order_id) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if (isset($_GET['orderId']) && '' != $_GET['orderId']) {
 
 		$payment_gateway_id = 'sokinpay_gateway';
 
 		// Get an instance of the WC_Payment_Gateways object
-		$payment_gateways   = WC_Payment_Gateways::instance();
+		$payment_gateways = WC_Payment_Gateways::instance();
 
 		// Get the desired WC_Payment_Gateway object
-		$payment_gateway    = $payment_gateways->payment_gateways()[$payment_gateway_id];
+		$payment_gateway = $payment_gateways->payment_gateways()[$payment_gateway_id];
 
 		$args = array(
 			'headers' => array(
@@ -104,21 +110,24 @@ function action_woocommerce_thankyou()
 			),
 		);
 
-
-		$url = $payment_gateway->woo_cpay_api_url . "/orders/" . sanitize_text_field(wp_unslash($_REQUEST['orderId']));
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$url = $payment_gateway->woo_cpay_api_url . '/orders/' . sanitize_text_field(wp_unslash($_GET['orderId']));
 
 		$request = wp_remote_get($url, $args);
 
 		if (!is_wp_error($request)) {
 			$res_body = wp_remote_retrieve_body($request);
-			$json_data = json_decode($res_body, true);
+
+			//update_option('ced_utk_test', $res_body);
+			
+			$json_data    = json_decode($res_body, true);
 			$order_status = $json_data['data']['order']['orderStatus'];
-			$order = new WC_Order(get_query_var('order-received'));
+			$order        = new WC_Order(get_query_var('order-received'));
 
 			if (strtolower($json_data['data']['order']['payments'][0]['status']) == 'declined') {
 				$order->update_status('failed');
 				$order->save();
-			} elseif (($order_status == 'PROCESSED' || $order_status == 'IN-PROGRESS') && strtolower($json_data['data']['order']['payments'][0]['status']) != 'declined') {
+			} elseif (( 'PROCESSED' == $order_status || 'IN-PROGRESS' == $order_status ) && strtolower($json_data['data']['order']['payments'][0]['status']) != 'declined') {
 				$order->update_status('processing');
 				$order->save();
 				$order->payment_complete();
@@ -129,8 +138,7 @@ function action_woocommerce_thankyou()
 
 add_filter('woocommerce_payment_gateways', 'woo_cpay_add_gateway_class');
 
-function woo_cpay_add_gateway_class($gateways)
-{
+function woo_cpay_add_gateway_class($gateways) {
 	$gateways[] = 'WooCpay_Gateway'; // your class name is here
 	return $gateways;
 }
@@ -140,38 +148,37 @@ function woo_cpay_add_gateway_class($gateways)
  */
 add_action('plugins_loaded', 'woo_cpay_init_gateway_class');
 
-function woo_cpay_init_gateway_class()
-{
+function woo_cpay_init_gateway_class() {
 	if (!class_exists('WC_Payment_Gateway')) {
 		return; // if the WC payment gateway class
 	}
 
-	class WooCpay_Gateway extends WC_Payment_Gateway
-	{
+	class WooCpay_Gateway extends WC_Payment_Gateway {
+	
 		/**
 		 * Class constructor, more about it in Step 3
 		 */
 
-		public function __construct()
-		{
-			$this->id = 'sokinpay_gateway'; // payment gateway plugin ID
-			$this->icon = plugin_dir_url(__FILE__) . '../assets/images/payment_methods.svg'; // URL of the icon that will be displayed on checkout page near your gateway name
+		public function __construct() {
+			
+			$this->id         = 'sokinpay_gateway'; // payment gateway plugin ID
+			$this->icon       = plugin_dir_url(__FILE__) . '../assets/images/payment_methods.svg'; // URL of the icon that will be displayed on checkout page near your gateway name
 			$this->has_fields = true; // in case you need a custom credit card form
 
 			// Set default option values for Payment Methods setting page
-			$this->method_title = 'Sokin Pay';
+			$this->method_title       = 'Sokin Pay';
 			$this->method_description = 'Enable a variety of secure payment options, including credit cards and pay by bank.';
 
 			// Method with all the options fields
 			$this->init_form_fields();
 			// Load the settings.
 			$this->init_settings();
-			$this->title = $this->get_option('title');
-			$this->description = $this->get_option('description');
-			$this->woo_cpay_enabled = $this->get_option('woo_cpay_enabled');
+			$this->title                 = $this->get_option('title');
+			$this->description           = $this->get_option('description');
+			$this->woo_cpay_enabled      = $this->get_option('woo_cpay_enabled');
 			$this->woo_cpay_redirect_url =  $this->get_option('woo_cpay_redirect_url');
-			$this->woo_cpay_x_api_key = $this->get_option('woo_cpay_x_api_key');
-			$this->woo_cpay_api_url = $this->get_option('woo_cpay_api_url');
+			$this->woo_cpay_x_api_key    = $this->get_option('woo_cpay_x_api_key');
+			$this->woo_cpay_api_url      = $this->get_option('woo_cpay_api_url');
 
 			// This action hook saves the settings
 			add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
@@ -180,8 +187,7 @@ function woo_cpay_init_gateway_class()
 		/**
 		 * Plugin options, we deal with it in Step 3 too
 		 */
-		public function init_form_fields()
-		{
+		public function init_form_fields() {
 			$this->form_fields = array(
 				'woo_cpay_enabled' => array(
 					'title'       => 'Enable/Disable',
@@ -197,9 +203,9 @@ function woo_cpay_init_gateway_class()
 					'desc_tip'    => true,
 				),
 				'description' => array(
-					'title'       => __('Description'),
+					'title'       => __('Description', 'sokinpay'),
 					'type'        => 'text',
-					'description' => __('Payment description that the customer will see on your checkout.'),
+					'description' => __('Payment description that the customer will see on your checkout.', 'sokinpay'),
 					'desc_tip'    => true
 				),
 				'woo_cpay_redirect_url' => array(
@@ -223,8 +229,7 @@ function woo_cpay_init_gateway_class()
 		/**
 		 * You will need it if you want your custom credit card form, Step 4 is about it
 		 */
-		public function payment_fields()
-		{
+		public function payment_fields() {
 			// I will echo() the form, but you can close PHP tags and print it directly in HTML
 			echo '<p style="margin:0">' . esc_attr($this->description) . '</p>';
 
@@ -239,25 +244,23 @@ function woo_cpay_init_gateway_class()
 		/*
 		 * Custom CSS and JS, in most cases required only when you decided to go with a custom credit card form
 		 */
-		public function payment_scripts()
-		{
+		public function payment_scripts() {
 			wp_enqueue_script('woocommerce_woo_cpay_js');
 			wp_register_script('woocommerce_woo_cpay_js', plugins_url('woo_cpay_js.js', __FILE__), array('jquery', 'woo_cpay_js'), '1.0.3', array('in_footer' => true));
 		}
 
 		/*
- 		 * Fields validation, more in Step 5
+		  * Fields validation, more in Step 5
 		 */
-		public function validate_fields()
-		{
+		public function validate_fields() {
 			return true;
 		}
 
 		/*
 		 * We're processing the payments here, everything about it is in Step 5
 		 */
-		public function process_payment($order_id)
-		{
+		public function process_payment($order_id) {
+			
 			$order = wc_get_order($order_id);
 
 			// Assign status value to $status
@@ -277,34 +280,34 @@ function woo_cpay_init_gateway_class()
 			WC()->cart->empty_cart();
 
 			// Initiating Order on Sokin Pay
-			$order_date = gmdate("Y-m-d", strtotime($order->get_date_created()));
+			$order_date = gmdate('Y-m-d', strtotime($order->get_date_created()));
 
 			$body = array(
-				"type" => "SINGLE",
-				"currency" => $order->get_order_currency(),
-				"totalAmount" => $order->get_total(),
-				"description" => "",
-				"redirectURL" => $order->get_checkout_order_received_url(),
-				"referenceNo" => gmdate("Ymds"),
-				"memo" => "",
-				"recurring" => array(
-					"frequency" => "ONCE",
-					"paymentCount" => 1,
-					"firstPaymentDate" => $order_date,
-					"firstPaymentAmount" => $order->get_total()
+				'type' => 'SINGLE',
+				'currency' => $order->get_order_currency(),
+				'totalAmount' => $order->get_total(),
+				'description' => '',
+				'redirectURL' => $order->get_checkout_order_received_url(),
+				'referenceNo' => gmdate('Ymds'),
+				'memo' => '',
+				'recurring' => array(
+					'frequency' => 'ONCE',
+					'paymentCount' => 1,
+					'firstPaymentDate' => $order_date,
+					'firstPaymentAmount' => $order->get_total()
 				),
-				"firstName" => $order->get_billing_first_name(),
-				"lastName" => $order->get_billing_last_name(),
-				"email" => $order->get_billing_email(),
-				"country" => $order->get_billing_country(),
-				"addressLine1" => $order->get_billing_address_1(),
-				"addressLine2" => $order->get_billing_address_2(),
-				"postTown" => "",
-				"postCode" => $order->get_billing_postcode(),
-				"city" => $order->get_billing_city(),
-				"save_card" => true,
-				"payment_method" => [],
-				"isExternal" => true
+				'firstName' => $order->get_billing_first_name(),
+				'lastName' => $order->get_billing_last_name(),
+				'email' => $order->get_billing_email(),
+				'country' => $order->get_billing_country(),
+				'addressLine1' => $order->get_billing_address_1(),
+				'addressLine2' => $order->get_billing_address_2(),
+				'postTown' => '',
+				'postCode' => $order->get_billing_postcode(),
+				'city' => $order->get_billing_city(),
+				'save_card' => true,
+				'payment_method' => [],
+				'isExternal' => true
 			);
 
 			$args = array(
@@ -315,13 +318,13 @@ function woo_cpay_init_gateway_class()
 				'body' => wp_json_encode($body)
 			);
 
-			$response = wp_remote_post($this->settings['woo_cpay_api_url'] . '/orders', $args);
+			$response     = wp_remote_post($this->settings['woo_cpay_api_url'] . '/orders', $args);
 			$responseBody = wp_remote_retrieve_body($response);
 
-			$responceData = (!is_wp_error($response)) ? json_decode($responseBody, true) : null;
+			$responceData = ( !is_wp_error($response) ) ? json_decode($responseBody, true) : null;
 
 			if (!is_wp_error($response)) {
-				$redirect_url = $this->settings['woo_cpay_redirect_url'] . "/" . $responceData['corporateId'] . "/" . $responceData['orderId'];
+				$redirect_url = $this->settings['woo_cpay_redirect_url'] . '/' . $responceData['corporateId'] . '/' . $responceData['orderId'];
 
 				// Add Sokin's Payment meta data
 				$order = new WC_Order($order_id);
@@ -329,7 +332,7 @@ function woo_cpay_init_gateway_class()
 				$order->update_meta_data('corporateId', $responceData['corporateId']);
 				$order->save();
 			}
-			if (!$responceData['success'] && $responceData['status'] == 400) {
+			if (!$responceData['success'] && 400 == $responceData['status'] ) {
 				throw new Exception(esc_attr($responceData['message']));
 				wp_die();
 			}
@@ -345,10 +348,9 @@ function woo_cpay_init_gateway_class()
 
 // Remove Refund button if Order status is Failed
 add_filter('woocommerce_order_actions', 'remove_refund_button_for_failed_orders', 10, 2);
-function remove_refund_button_for_failed_orders($actions, $order)
-{
+function remove_refund_button_for_failed_orders($actions, $order) {
 	// Check if the order status is 'failed'
-	if ($order->status == 'failed') {
+	if ('failed' == $order->status) {
 		// Unset the refund button
 		echo '<style>.button.refund-items{display: none;}</style>';
 	}
@@ -357,47 +359,71 @@ function remove_refund_button_for_failed_orders($actions, $order)
 
 // Replace the default message if Order failed or returned without making payment.
 add_action('template_redirect', 'custom_return_status_action');
-function custom_return_status_action()
-{
+function custom_return_status_action() {
 	// Check if it's the checkout page
 	if (is_checkout()) {
 
 		// Check for the 'status' parameter in the URL, e.g., ?status=return
 		add_filter('woocommerce_thankyou_order_received_text', 'custom_thank_you_message', 10, 2);
 
-		function custom_thank_you_message($custom_message, $order)
-		{
-			$payment_gateway_id = 'sokinpay_gateway';
+		function custom_thank_you_message($custom_message, $order) {
 
-			// Get an instance of the WC_Payment_Gateways object
-			$payment_gateways   = WC_Payment_Gateways::instance();
+			if (isset($order) && !empty($order)) {
 
-			// Get the desired WC_Payment_Gateway object
-			$payment_gateway    = $payment_gateways->payment_gateways()[$payment_gateway_id];
+				$payment_method = $order->get_payment_method();
 
-			$args = array(
-				'headers' => array(
-					'x-api-key' => $payment_gateway->settings['woo_cpay_x_api_key'],
-					'Content-Type' => 'application/json'
-				),
-			);
+				if ('sokinpay_gateway' !=  $payment_method) {
 
-			$url = $payment_gateway->woo_cpay_api_url . "/orders/" . sanitize_text_field(wp_unslash($_GET['orderId']));
-
-			$request = wp_remote_get($url, $args);
-
-			if (!is_wp_error($request)) {
-				$res_body = wp_remote_retrieve_body($request);
-				$json_data = json_decode($res_body, true);
-
-				if (strtolower($json_data['data']['order']['payments'][0]['status']) == 'declined') {
-					$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is failed</div>';
+					return $custom_message;
 				}
+
+
+				$payment_gateway_id = 'sokinpay_gateway';
+
+				// Get an instance of the WC_Payment_Gateways object
+				$payment_gateways = WC_Payment_Gateways::instance();
+
+				// Get the desired WC_Payment_Gateway object
+				$payment_gateway = $payment_gateways->payment_gateways()[$payment_gateway_id];
+
+				$args = array(
+					'headers' => array(
+						'x-api-key' => $payment_gateway->settings['woo_cpay_x_api_key'],
+						'Content-Type' => 'application/json'
+					),
+				);
+
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$orderId = isset($_GET['orderId']) ? sanitize_text_field(wp_unslash($_GET['orderId'])) : '';
+
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$status = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : '';
+
+				
+
+					$url = $payment_gateway->woo_cpay_api_url . '/orders/' . sanitize_text_field(wp_unslash($orderId));
+
+					$request = wp_remote_get($url, $args);
+
+				if (!is_wp_error($request)) {
+					$res_body  = wp_remote_retrieve_body($request);
+					$json_data = json_decode($res_body, true);
+
+					if ('declined' == strtolower($json_data['data']['order']['payments'][0]['status'])) {
+						$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is failed</div>';
+					}
+				}
+				if (wp_unslash('return' == $status)) {
+					$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is Pending payment</div>';
+				}
+					return $custom_message;
+				
 			}
-			if (wp_unslash($_GET['status'] == 'return')) {
-				$custom_message = '<div style="position: relative; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;" role="alert">Order #' . $order->id . ' is Pending payment</div>';
-			}
-			return $custom_message;
+
+
+
+			
+
 		}
 	}
 }
