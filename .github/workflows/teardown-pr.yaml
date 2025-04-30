@@ -7,6 +7,8 @@ on:
 jobs:
   teardown:
     runs-on: ubuntu-latest
+    environment:
+      name: pr-deploy
     steps:
       - name: Teardown via SSH
         uses: appleboy/ssh-action@v0.1.7
