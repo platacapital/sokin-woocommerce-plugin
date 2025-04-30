@@ -59,6 +59,7 @@ jobs:
             SOKIN_REDIRECT_URL=${{ secrets.SOKIN_REDIRECT_URL }}
             SOKIN_X_API_KEY=${{ secrets.SOKIN_X_API_KEY }}
             SOKIN_API_URL=${{ secrets.SOKIN_API_URL }}
+            NETWORK=pr-${{ github.event.number }}
             EOF
             cp ~/deployments-wordpress/docker-compose.yml .
             docker-compose down || true && docker-compose pull && docker-compose up -d --force-recreate
