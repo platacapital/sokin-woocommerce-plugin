@@ -14,6 +14,7 @@ final class SokinPay_Blocks_Class extends AbstractPaymentMethodType {
 	  return $this->gateway->is_available();
 	}
 	public function get_payment_method_script_handles() {
+
 	  wp_register_script(
 		'sokinpay_gateway-blocks-integration',
 		plugin_dir_url(__FILE__) . 'checkout.js',
@@ -27,6 +28,12 @@ final class SokinPay_Blocks_Class extends AbstractPaymentMethodType {
 		WC_VERSION,
 		true
 	  );
+
+	  //wp_localize_script('sokinpay_gateway-blocks-integration', 'block_params', array('svg' => 'http://ced-sokinpay.local:10064/wp-content/plugins/sokinpay/assets/images/payment_methods.svg'));
+
+	  //$svg_link = plugin_dir_url(__FILE__).''
+	  wp_localize_script('sokinpay_gateway-blocks-integration', 'block_params', array('svg' => 'http://ced-sokinpay.local:10064/wp-content/plugins/sokinpay/assets/images/payment_methods.svg'));
+
 		if (function_exists('wp_set_script_translations')) {
 		  wp_set_script_translations('sokinpay_gateway-blocks-integration');
 		}
