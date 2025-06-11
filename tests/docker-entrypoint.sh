@@ -68,8 +68,31 @@ fi
 
 # Configure Sokin Pay Gateway Settings
 echo "Configuring Sokin Pay settings..."
-SETTINGS_JSON="{\"enabled\": \"yes\", \"title\": \"Sokin Pay (Test)\", \"description\": \"Pay via Sokin Test Env\", \"woo_cpay_redirect_url\": \"${SOKIN_REDIRECT_URL:-https://portal.sandbox.sokin.com/sokinpay/customerPay}\", \"woo_cpay_x_api_key\": \"${SOKIN_X_API_KEY:-dummy_api_key}\", \"woo_cpay_api_url\": \"${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}\"}"
+SETTINGS_JSON="{\"enabled\": \"yes\", \"title\": \"Pay by card\", \"description\": \"Powered by Sokin\", \"woo_cpay_redirect_url\": \"${SOKIN_REDIRECT_URL:-https://portal.sandbox.sokin.com/sokinpay/customerPay}\", \"woo_cpay_x_api_key\": \"${SOKIN_X_API_KEY:-dummy_api_key}\", \"woo_cpay_api_url\": \"${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}\"}"
 wp option update woocommerce_sokinpay_gateway_settings "$SETTINGS_JSON" --format=json --allow-root
+
+# Configure WooCommerce for live mode with plugin version notice
+echo "Configuring WooCommerce for live operation..."
+
+# Get the plugin version from the main plugin file
+PLUGIN_VERSION=$(wp eval 'echo get_plugin_data(WP_PLUGIN_DIR . "/sokin-woocommerce-plugin/sokin-woocommerce-plugin.php")["Version"];' --allow-root 2>/dev/null || echo "Unknown")
+
+# Disable demo store mode
+wp option update woocommerce_demo_store "no" --allow-root
+
+# Set custom store notice with plugin version
+STORE_NOTICE="🚀 Sokin WooCommerce Plugin v${PLUGIN_VERSION} - Demo Environment Active"
+wp option update woocommerce_store_notice "$STORE_NOTICE" --allow-root
+wp option update woocommerce_demo_store_notice "$STORE_NOTICE" --allow-root
+
+# Ensure store is not in coming soon mode
+wp option update woocommerce_coming_soon "no" --allow-root
+
+# Configure store for live operation
+wp option update woocommerce_onboarding_opt_in "no" --allow-root
+wp option update woocommerce_task_list_hidden "yes" --allow-root
+
+echo "WooCommerce configured for live operation with plugin version notice."
 
 # Install WordPress Importer plugin if not already active
 echo "Checking for WordPress Importer plugin..."
