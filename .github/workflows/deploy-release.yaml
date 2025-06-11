@@ -1,0 +1,65 @@
+name: Deploy Release Demo
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: release-demo
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          file: ./tests/Dockerfile
+          tags: ${{ secrets.ECR_URL }}:${{ github.event.release.tag_name }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/deployments-wordpress
+            mkdir -p demo
+            cd demo
+            cat > .env <<EOF
+            ECR_REPO_URI=${{ secrets.ECR_URL }}
+            IMAGE_TAG=${{ github.event.release.tag_name }}
+            VIRTUAL_HOST=demo.wordpress.sokin.com
+            ADMIN_USER=demo
+            ADMIN_PASS=${{ secrets.ADMIN_PASS }}
+            SOKIN_REDIRECT_URL=${{ secrets.SOKIN_REDIRECT_URL }}
+            SOKIN_X_API_KEY=${{ secrets.SOKIN_X_API_KEY }}
+            SOKIN_API_URL=${{ secrets.SOKIN_API_URL }}
+            NETWORK=demo
+            EOF
+            cp ~/deployments-wordpress/docker-compose.yml .
+            docker-compose down || true && docker-compose pull && docker-compose up -d --force-recreate 
