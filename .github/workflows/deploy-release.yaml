@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -39,7 +41,7 @@ jobs:
           context: .
           push: true
           file: ./tests/Dockerfile
-          tags: ${{ secrets.ECR_URL }}:${{ github.event.release.tag_name }}
+          tags: ${{ secrets.ECR_URL }}:${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -57,7 +59,7 @@ jobs:
             cd demo
             cat > .env <<EOF
             ECR_REPO_URI=${{ secrets.ECR_URL }}
-            IMAGE_TAG=${{ github.event.release.tag_name }}
+            IMAGE_TAG=${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
             VIRTUAL_HOST=demo.wordpress.sokin.com
             ADMIN_USER=demo
             ADMIN_PASS=${{ secrets.ADMIN_PASS }}
