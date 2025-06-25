@@ -61,7 +61,7 @@ jobs:
             ECR_REPO_URI=${{ secrets.ECR_URL }}
             IMAGE_TAG=${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
             VIRTUAL_HOST=demo.wordpress.sokin.com
-            ADMIN_USER=demo
+            ADMIN_USER=admin
             ADMIN_PASS=${{ secrets.ADMIN_PASS }}
             SOKIN_REDIRECT_URL=${{ secrets.SOKIN_REDIRECT_URL }}
             SOKIN_X_API_KEY=${{ secrets.SOKIN_X_API_KEY }}

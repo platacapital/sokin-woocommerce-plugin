@@ -54,7 +54,7 @@ jobs:
             ECR_REPO_URI=${{ secrets.ECR_URL }}
             IMAGE_TAG=pr-${{ github.sha }}
             VIRTUAL_HOST=pr-${{ github.event.number }}.wordpress.develop.sokin.com
-            ADMIN_USER=pr-${{ github.event.number }}
+            ADMIN_USER=admin
             ADMIN_PASS=${{ secrets.ADMIN_PASS }}
             SOKIN_REDIRECT_URL=${{ secrets.SOKIN_REDIRECT_URL }}
             SOKIN_X_API_KEY=${{ secrets.SOKIN_X_API_KEY }}
