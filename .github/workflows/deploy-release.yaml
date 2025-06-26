@@ -9,9 +9,36 @@ on:
         description: 'Version to deploy'
         required: true
         type: string
+      wordpress_version:
+        description: 'WordPress version'
+        required: false
+        type: string
+        default: '6.8.1'
+      php_version:
+        description: 'PHP version'
+        required: false
+        type: string
+        default: '8.4'
+      wp_cli_version:
+        description: 'WP-CLI version'
+        required: false
+        type: string
+        default: '2.12.0'
+      woocommerce_version:
+        description: 'WooCommerce version'
+        required: false
+        type: string
+        default: '9.9.5'
 
 permissions:
   contents: read
+
+env:
+  # Default versions for release deployments
+  WORDPRESS_VERSION: "6.8.1"
+  PHP_VERSION: "8.4"
+  WP_CLI_VERSION: "2.12.0"
+  WOOCOMMERCE_VERSION: "9.9.5"
 
 jobs:
   build:
@@ -42,6 +69,11 @@ jobs:
           push: true
           file: ./tests/Dockerfile
           tags: ${{ secrets.ECR_URL }}:${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
+          build-args: |
+            WORDPRESS_VERSION=${{ github.event_name == 'workflow_dispatch' && inputs.wordpress_version || env.WORDPRESS_VERSION }}
+            PHP_VERSION=${{ github.event_name == 'workflow_dispatch' && inputs.php_version || env.PHP_VERSION }}
+            WP_CLI_VERSION=${{ github.event_name == 'workflow_dispatch' && inputs.wp_cli_version || env.WP_CLI_VERSION }}
+            WOOCOMMERCE_VERSION=${{ github.event_name == 'workflow_dispatch' && inputs.woocommerce_version || env.WOOCOMMERCE_VERSION }}
 
   deploy:
     runs-on: ubuntu-latest
