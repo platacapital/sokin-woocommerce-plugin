@@ -1,86 +1,64 @@
-# docker-compose.yml (place in project root)
-
-# version: '3.8' # REMOVED - Obsolete in Docker Compose V2
-
 services:
-  db:
-    # Switch to MariaDB 10.6 for native ARM64 support
-    image: mariadb:10.6
-    # platform: linux/amd64 # REMOVED - Not needed for native image
-    volumes:
-      # Persist database data locally using a named volume
-      - db_data:/var/lib/mysql
-    environment:
-      # MariaDB uses MARIADB_ variables, but MYSQL_ also work for compatibility
-      MYSQL_ROOT_PASSWORD: 'changeme_root_pw' # <-- CHANGE THIS!
-      MYSQL_DATABASE: 'wordpress_test'
-      MYSQL_USER: 'wp_user'
-      MYSQL_PASSWORD: 'changeme_wp_pw' # <-- CHANGE THIS!
-      MARIADB_ROOT_PASSWORD: 'changeme_root_pw' # Redundant but explicit
-      MARIADB_DATABASE: 'wordpress_test' # Redundant but explicit
-      MARIADB_USER: 'wp_user' # Redundant but explicit
-      MARIADB_PASSWORD: 'changeme_wp_pw' # Redundant but explicit
-    healthcheck:
-        # Use MariaDB env vars explicitly in healthcheck
-        # Use string format with $$ to ensure shell expansion of variables inside container
-        test: "mysqladmin ping -h localhost -u$$MARIADB_USER -p$$MARIADB_PASSWORD --silent"
-        interval: 10s
-        timeout: 5s
-        retries: 5
-
   wordpress:
     build:
-      # Assumes this docker-compose.yml is in the project root
       context: .
-      dockerfile: tests/Dockerfile # Updated path relative to root
+      dockerfile: tests/Dockerfile
     depends_on:
       db:
-        condition: service_healthy # Wait for db to be ready
+        condition: service_healthy
     ports:
-      # Map localhost:8080 to container port 80 (HTTP) - useful for direct access if needed
       - "8080:80"
     volumes:
-       # Map local plugin code
-       - .:/var/www/html/wp-content/plugins/sokin-woocommerce-plugin
-       # Persist uploads
-       - wp_uploads:/var/www/html/wp-content/uploads
+      - .:/var/www/html/wp-content/plugins/sokin-woocommerce-plugin
+      - wp_uploads:/var/www/html/wp-content/uploads
     environment:
-      WORDPRESS_DB_HOST: db:3306 # Use the service name 'db'
-      WORDPRESS_DB_USER: 'wp_user' # Use the same user as defined for the db service
-      WORDPRESS_DB_PASSWORD: 'changeme_wp_pw' # Use the same password as defined for the db service
-      WORDPRESS_DB_NAME: 'wordpress_test' # Use the same database name as defined for the db service
-      ADMIN_USER: 'testadmin' # Username for the WP admin user created by the entrypoint script
-      ADMIN_PASS: 'testpass' # <-- CHANGE THIS (password for the WP admin user)
-      # VIRTUAL_HOST should be the primary address users access (used for DB options)
-      VIRTUAL_HOST: 'https://localhost:8443' # Keep for wp core install
+      # WordPress Database
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-wp_user}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-changeme_wp_pw}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress_test}
 
-      # Further Simplification: Rely on entrypoint for $_SERVER['HTTPS'] and FORCE_SSL_ADMIN.
-      # Set ONLY the URL constants.
+      # WordPress Admin
+      ADMIN_USER: ${ADMIN_USER:-testadmin}
+      ADMIN_PASS: ${ADMIN_PASS:-testpass}
+      VIRTUAL_HOST: ${VIRTUAL_HOST:-https://localhost:8443}
+
+      # Sokin Gateway
+      SOKIN_REDIRECT_URL: ${SOKIN_REDIRECT_URL:-https://portal.sandbox.sokin.com/sokinpay/customerPay}
+      SOKIN_X_API_KEY: ${SOKIN_X_API_KEY:-dummy_api_key}
+      SOKIN_API_URL: ${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}
+
+      # WordPress URL Configuration
       WORDPRESS_CONFIG_EXTRA: |
-        define('WP_HOME',    'https://localhost:8443');
-        define('WP_SITEURL', 'https://localhost:8443');
-
-      # Optional: Uncomment and set these to override defaults in docker-entrypoint.sh
-      # SOKIN_REDIRECT_URL: 'your_local_redirect_url'
-      # SOKIN_X_API_KEY: 'your_local_sokin_key'
-      # SOKIN_API_URL: 'your_local_sokin_api_url'
+        define('WP_HOME',    '${VIRTUAL_HOST:-https://localhost:8443}');
+        define('WP_SITEURL', '${VIRTUAL_HOST:-https://localhost:8443}');
     restart: unless-stopped
 
-  # ADDED Nginx reverse proxy service
+  db:
+    image: mariadb:10.6
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme_root_pw}
+      MYSQL_DATABASE: ${WORDPRESS_DB_NAME:-wordpress_test}
+      MYSQL_USER: ${WORDPRESS_DB_USER:-wp_user}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD:-changeme_wp_pw}
+    healthcheck:
+      test: "mysqladmin ping -h localhost -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   nginx:
     image: nginx:latest
     depends_on:
       - wordpress
     ports:
-      # Map host port 8443 to Nginx container port 443 (HTTPS)
       - "8443:443"
-      # Optional: Map host port 8081 to Nginx container port 80 (for HTTP -> HTTPS redirect)
-      # - "8081:80"
     volumes:
-      # Mount the Nginx configuration (relative to root)
-      - ./local-dev/nginx.conf:/etc/nginx/conf.d/default.conf:ro # Updated path
-      # Mount the SSL certificates (relative to root)
-      - ./local-dev/certs:/etc/nginx/ssl:ro # Updated path
+      - ./local-dev/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./local-dev/certs:/etc/nginx/ssl:ro
     restart: unless-stopped
 
 # Define named volumes used by the services above
