@@ -102,7 +102,7 @@ function action_woocommerce_thankyou($order_id) {
 		$order->update_status('pending', __('Customer returned from Sokin without paying.', 'sokinpay'));
 		$order->save();
 		wc_add_notice(__('You cancelled the payment. Please try again.', 'sokinpay'), 'notice');
-		wp_safe_redirect(wc_get_checkout_url());
+		wp_safe_redirect($order->get_checkout_payment_url());
 		exit;
 	}
 
@@ -133,7 +133,7 @@ function action_woocommerce_thankyou($order_id) {
 					$order->update_status('failed', __('Payment declined by Sokin.', 'sokinpay'));
 					$order->save();
 					wc_add_notice(__('Your payment was declined. Please try again or choose a different payment method.', 'sokinpay'), 'error');
-					wp_safe_redirect(wc_get_checkout_url());
+					wp_safe_redirect($order->get_checkout_payment_url());
 					exit;
 				} elseif (( 'PROCESSED' == $order_status || 'IN-PROGRESS' == $order_status ) && strtolower($json_data['data']['order']['payments'][0]['status']) != 'declined') {
 					$order->update_status('processing');
@@ -344,7 +344,7 @@ function woo_cpay_init_gateway_class() {
 				wc_add_notice('Payment Error: ' . esc_html($responceData['message']), 'error');
 				return array(
 					'result'   => 'failure',
-					'redirect' => wc_get_checkout_url(),
+					'redirect' => $order->get_checkout_payment_url(),
 				);
 			}
 
