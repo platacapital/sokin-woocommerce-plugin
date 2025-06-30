@@ -1,0 +1,40 @@
+services:
+  wordpress:
+    image: ${ECR_REPO_URI}:${IMAGE_TAG}
+    pull_policy: always
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      ADMIN_USER: ${ADMIN_USER}
+      ADMIN_PASS: ${ADMIN_PASS}
+      LETSENCRYPT_HOST: ${VIRTUAL_HOST}
+      SOKIN_REDIRECT_URL: ${SOKIN_REDIRECT_URL}
+      SOKIN_X_API_KEY: ${SOKIN_X_API_KEY}
+      SOKIN_API_URL: ${SOKIN_API_URL}
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - stack_net
+      - proxy
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: ${WORDPRESS_DB_NAME}
+      MYSQL_USER: ${WORDPRESS_DB_USER}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - stack_net
+      - proxy
+
+networks:
+  stack_net:
+    name: ${NETWORK}
+  proxy:
+    external: true
