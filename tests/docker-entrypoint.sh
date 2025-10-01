@@ -77,6 +77,9 @@ fi
 SETTINGS_JSON="{\"enabled\": \"yes\", \"title\": \"Pay by card\", \"description\": \"Powered by Sokin\", \"woo_cpay_redirect_url\": \"${SOKIN_REDIRECT_URL:-https://portal.sandbox.sokin.com/sokinpay/customerPay}\", \"woo_cpay_x_api_key\": \"${SOKIN_X_API_KEY:-dummy_api_key}\", \"woo_cpay_api_url\": \"${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}\"}"
 wp option update woocommerce_sokinpay_gateway_settings "$SETTINGS_JSON" --format=json
 
+# Enable Cash on Delivery to test multiple gateway scenarios (radio buttons in checkout)
+wp option update woocommerce_cod_settings '{"enabled":"yes"}' --format=json
+
 WP_VERSION=$(wp core version 2>/dev/null || echo "Unknown")
 WC_VERSION=$(wp plugin get woocommerce --field=version 2>/dev/null || echo "Unknown")
 PHP_VERSION=$(php -v | head -n 1 | cut -d ' ' -f 2)

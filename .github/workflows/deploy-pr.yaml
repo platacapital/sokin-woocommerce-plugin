@@ -52,6 +52,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build]
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Read docker-compose.deploy.yml
+        id: compose_file
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const content = fs.readFileSync('docker-compose.deploy.yml', 'utf8');
+            return content;
+          result-encoding: string
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -71,9 +84,15 @@ jobs:
             SOKIN_REDIRECT_URL=${{ secrets.SOKIN_REDIRECT_URL }}
             SOKIN_X_API_KEY=${{ secrets.SOKIN_X_API_KEY }}
             SOKIN_API_URL=${{ secrets.SOKIN_API_URL }}
+            WORDPRESS_DB_NAME=${{ secrets.WORDPRESS_DB_NAME }}
+            WORDPRESS_DB_USER=${{ secrets.WORDPRESS_DB_USER }}
+            WORDPRESS_DB_PASSWORD=${{ secrets.WORDPRESS_DB_PASSWORD }}
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
             NETWORK=pr-${{ github.event.number }}
             EOF
-            cp ~/deployments-wordpress/docker-compose.yml .
+            cat > docker-compose.yml <<'EOF'
+            ${{ steps.compose_file.outputs.result }}
+            EOF
             docker-compose down || true && docker-compose pull && docker-compose up -d --force-recreate
       - name: Post PR Comment with Deployment URL
         uses: marocchino/sticky-pull-request-comment@v2
