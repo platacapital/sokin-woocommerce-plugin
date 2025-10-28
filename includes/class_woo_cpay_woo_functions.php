@@ -163,7 +163,14 @@ function woo_cpay_init_gateway_class() {
 	}
 
 	class WooCpay_Gateway extends WC_Payment_Gateway {
-	
+		/**
+		 * Declared properties to avoid dynamic property creation (PHP 8.2+).
+		 */
+		public $woo_cpay_enabled;
+		public $woo_cpay_redirect_url;
+		public $woo_cpay_x_api_key;
+		public $woo_cpay_api_url;
+
 		/**
 		 * Class constructor, more about it in Step 3
 		 */
