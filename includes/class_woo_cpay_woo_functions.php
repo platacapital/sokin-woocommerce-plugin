@@ -137,6 +137,7 @@ function action_woocommerce_thankyou($order_id) {
 					exit;
 				} elseif (( 'PROCESSED' == $order_status || 'IN-PROGRESS' == $order_status ) && strtolower($json_data['data']['order']['payments'][0]['status']) != 'declined') {
 					$order->update_status('processing');
+					$order->save();
 					$order->payment_complete();
 				}
 			}
