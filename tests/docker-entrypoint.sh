@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e # Exit immediately if a command exits with a non-zero status.
 
+# Enable logging to file and stdout
+LOG_FILE="/var/www/html/wp-content/entrypoint.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+touch "$LOG_FILE"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 # --- 1. Set working directory ---
 cd /var/www/html
 
@@ -36,7 +42,7 @@ if [ ! -f /var/www/html/wp-config.php ]; then
                      --dbpass="$WORDPRESS_DB_PASSWORD" \
                      --dbhost="$WORDPRESS_DB_HOST" \
                      --skip-check \
-                     --extra-php="\$_SERVER['HTTPS'] = 'on'; define('FORCE_SSL_ADMIN', true);"
+                     --extra-php="\$_SERVER['HTTPS'] = 'on'; define('FORCE_SSL_ADMIN', true); define('WP_DEBUG', true); define('WP_DEBUG_LOG', true); define('WP_DEBUG_DISPLAY', true); @ini_set('display_errors', 1);"
 fi
 
 # --- 4. Install WordPress ---
