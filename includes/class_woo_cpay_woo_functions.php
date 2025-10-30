@@ -108,6 +108,16 @@ function action_woocommerce_thankyou($order_id) {
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if (isset($_GET['orderId']) && '' !== $_GET['orderId']) {
+		// Validate that the orderId from GET parameter matches the order's stored orderId meta
+		$stored_order_id = $order->get_meta('orderId');
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$get_order_id = sanitize_text_field(wp_unslash($_GET['orderId']));
+		
+		// Only proceed if the orderId matches the stored value for this order
+		if (empty($stored_order_id) || $stored_order_id !== $get_order_id) {
+			return;
+		}
+
 		$payment_gateway_id = 'sokinpay_gateway';
 		$payment_gateways   = WC_Payment_Gateways::instance();
 		$payment_gateway    = $payment_gateways->payment_gateways()[$payment_gateway_id];
@@ -119,8 +129,7 @@ function action_woocommerce_thankyou($order_id) {
 			),
 		);
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$url     = $payment_gateway->woo_cpay_api_url . '/orders/' . sanitize_text_field(wp_unslash($_GET['orderId']));
+		$url     = $payment_gateway->woo_cpay_api_url . '/orders/' . $get_order_id;
 		$request = wp_remote_get($url, $args);
 
 		if (!is_wp_error($request)) {
