@@ -49,6 +49,11 @@ function sokinpay_create_refund($refund_id, $args) {
 			$json_data = json_decode($order_res_body, true);
 		}
 
+		// Verify payments array exists and has elements before accessing
+		if (!isset($json_data['data']['order']['payments']) || !is_array($json_data['data']['order']['payments']) || empty($json_data['data']['order']['payments'])) {
+			return;
+		}
+
 		// Making Refund Request Body
 		$body = array(
 			'paymentId' => $json_data['data']['order']['payments'][0]['paymentId'],
@@ -136,7 +141,7 @@ function action_woocommerce_thankyou($order_id) {
 			$res_body  = wp_remote_retrieve_body($request);
 			$json_data = json_decode($res_body, true);
 
-			if (isset($json_data['data']['order']['payments'][0]['status'])) {
+			if (isset($json_data['data']['order']['payments']) && is_array($json_data['data']['order']['payments']) && !empty($json_data['data']['order']['payments']) && isset($json_data['data']['order']['payments'][0]['status'])) {
 				$order_status = $json_data['data']['order']['orderStatus'];
 				if (strtolower($json_data['data']['order']['payments'][0]['status']) == 'declined') {
 					$order->update_status('failed', __('Payment declined by Sokin.', 'sokinpay'));
