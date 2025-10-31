@@ -102,6 +102,29 @@ function action_woocommerce_thankyou($order_id) {
 		return;
 	}
 
+	// Verify order ownership for logged-in users
+	$current_user_id = get_current_user_id();
+	if ($current_user_id > 0) {
+		$order_customer_id = $order->get_customer_id();
+		if ($order_customer_id !== $current_user_id) {
+			// Log security violation for monitoring
+			if (function_exists('wc_get_logger')) {
+				$logger = wc_get_logger();
+				$logger->warning(
+					'Sokin Pay: Unauthorized order access attempt',
+					array(
+						'source' => 'sokinpay-gateway',
+						'order_id' => $order_id,
+						'current_user_id' => $current_user_id,
+						'order_customer_id' => $order_customer_id,
+					)
+				);
+			}
+			return;
+		}
+	}
+	// For guest checkout, WooCommerce already validates access via order keys
+
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if (isset($_GET['status']) && 'return' === $_GET['status']) {
 		$order->update_status('pending', __('Customer returned from Sokin without paying.', 'sokinpay'));
@@ -120,6 +143,19 @@ function action_woocommerce_thankyou($order_id) {
 		
 		// Only proceed if the orderId matches the stored value for this order
 		if (empty($stored_order_id) || $stored_order_id !== $get_order_id) {
+			// Log mismatch for debugging (could indicate data inconsistency or manipulation attempt)
+			if (function_exists('wc_get_logger')) {
+				$logger = wc_get_logger();
+				$logger->warning(
+					'Sokin Pay: orderId validation failed',
+					array(
+						'source' => 'sokinpay-gateway',
+						'order_id' => $order_id,
+						'stored_order_id' => $stored_order_id,
+						'get_order_id' => $get_order_id,
+					)
+				);
+			}
 			return;
 		}
 
