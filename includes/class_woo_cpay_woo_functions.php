@@ -43,11 +43,12 @@ function sokinpay_create_refund($refund_id, $args) {
 		$order_request_url = $payment_gateway->woo_cpay_api_url . '/orders/' . $order->get_meta('orderId');
 		$order_request     = wp_remote_get($order_request_url, $order_args);
 
-		if (!is_wp_error($order_request)) {
-			$order_res_body = wp_remote_retrieve_body($order_request);
-			
-			$json_data = json_decode($order_res_body, true);
+		if (is_wp_error($order_request)) {
+			return;
 		}
+
+		$order_res_body = wp_remote_retrieve_body($order_request);
+		$json_data = json_decode($order_res_body, true);
 
 		// Verify payments array exists and has elements before accessing
 		if (!isset($json_data['data']['order']['payments']) || !is_array($json_data['data']['order']['payments']) || empty($json_data['data']['order']['payments'])) {
@@ -78,13 +79,15 @@ function sokinpay_create_refund($refund_id, $args) {
 
 		//update_option('ced_utk_test', $response);
 
-		if (!is_wp_error($response)) {
-			$res_body = wp_remote_retrieve_body($response);
-
-			//update_option('ced_utk_test_2', $res_body );
-
-			$json_data = json_decode($res_body, true);
+		if (is_wp_error($response)) {
+			return;
 		}
+
+		$res_body = wp_remote_retrieve_body($response);
+
+		//update_option('ced_utk_test_2', $res_body );
+
+		$json_data = json_decode($res_body, true);
 		// Show error message if we are doing partial payment on same day which is not allowed.
 		// Same day transfer will be fully refunded.
 		if (!$json_data['success'] && 400 == $json_data['status']) {
@@ -388,8 +391,9 @@ function woo_cpay_init_gateway_class() {
 			$responseBody = wp_remote_retrieve_body($response);
 
 			$responceData = ( !is_wp_error($response) ) ? json_decode($responseBody, true) : null;
+			$redirect_url = null;
 
-			if (!is_wp_error($response)) {
+			if (!is_wp_error($response) && is_array($responceData) && isset($responceData['corporateId'], $responceData['orderId'])) {
 				$redirect_url = $this->settings['woo_cpay_redirect_url'] . '/' . $responceData['corporateId'] . '/' . $responceData['orderId'];
 
 				// Add Sokin's Payment meta data
@@ -398,8 +402,19 @@ function woo_cpay_init_gateway_class() {
 				$order->update_meta_data('corporateId', $responceData['corporateId']);
 				$order->save();
 			}
-			if (!$responceData['success'] && 400 == $responceData['status'] ) {
-				wc_add_notice('Payment Error: ' . esc_html($responceData['message']), 'error');
+
+			if (is_array($responceData) && isset($responceData['success'], $responceData['status']) && !$responceData['success'] && 400 == $responceData['status']) {
+				$message = isset($responceData['message']) ? $responceData['message'] : 'Unexpected error while creating the payment.';
+				wc_add_notice('Payment Error: ' . esc_html($message), 'error');
+				return array(
+					'result'   => 'failure',
+					'redirect' => $order->get_checkout_payment_url(),
+				);
+			}
+
+			// If we don't have a valid redirect URL by now, treat as failure
+			if (empty($redirect_url)) {
+				wc_add_notice('Payment Error: Unable to initialize payment. Please try again.', 'error');
 				return array(
 					'result'   => 'failure',
 					'redirect' => $order->get_checkout_payment_url(),
