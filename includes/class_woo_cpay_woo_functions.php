@@ -96,6 +96,53 @@ function sokinpay_create_refund($refund_id, $args) {
 	}
 }
 
+/**
+ * Log a warning with WooCommerce logger when writable; otherwise fall back to PHP error_log.
+ *
+ * This prevents permission warnings when the uploads directory is not writable
+ * (e.g., demo environments) while retaining security-relevant visibility.
+ *
+ * @param string $message  Message to log.
+ * @param array  $context  Optional context. Sensitive values are minimized in fallback.
+ *
+ * @return void
+ */
+function sokin_gateway_log_warning($message, $context = array()) {
+	$source = isset($context['source']) ? $context['source'] : 'sokinpay-gateway';
+
+	$uploads = wp_upload_dir();
+	$basedir = isset($uploads['basedir']) ? $uploads['basedir'] : '';
+	$logs_dir = trailingslashit($basedir) . 'wc-logs';
+	$base_writable = is_dir($basedir) && (function_exists('wp_is_writable') ? wp_is_writable($basedir) : is_writable($basedir));
+	$logs_writable = is_dir($logs_dir)
+		? (function_exists('wp_is_writable') ? wp_is_writable($logs_dir) : is_writable($logs_dir))
+		: $base_writable;
+
+	if (function_exists('wc_get_logger') && $logs_writable) {
+		$logger = wc_get_logger();
+		$context['source'] = $source;
+		$logger->warning($message, $context);
+		return;
+	}
+
+	// Fallback to PHP error_log with reduced context to avoid leaking sensitive data.
+	$safe_context = array('src' => $source);
+	if (isset($context['order_id'])) {
+		$safe_context['order_id'] = $context['order_id'];
+	}
+	if (isset($context['current_user_id'])) {
+		$safe_context['current_user_id'] = $context['current_user_id'];
+	}
+	if (isset($context['stored_order_id'])) {
+		$safe_context['stored_order_id'] = $context['stored_order_id'];
+	}
+	if (isset($context['get_order_id'])) {
+		$safe_context['get_order_id'] = $context['get_order_id'];
+	}
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log('Sokin Pay WARNING: ' . $message . ' ' . wp_json_encode($safe_context));
+}
+
 // Thank you page
 add_action('woocommerce_thankyou', 'action_woocommerce_thankyou', 10, 1);
 
@@ -118,18 +165,15 @@ function action_woocommerce_thankyou($order_id) {
 		$order_customer_id = $order->get_customer_id();
 		if ($order_customer_id !== $current_user_id) {
 			// Log security violation for monitoring
-			if (function_exists('wc_get_logger')) {
-				$logger = wc_get_logger();
-				$logger->warning(
-					'Sokin Pay: Unauthorized order access attempt',
-					array(
-						'source' => 'sokinpay-gateway',
-						'order_id' => $order_id,
-						'current_user_id' => $current_user_id,
-						'order_customer_id' => $order_customer_id,
-					)
-				);
-			}
+			sokin_gateway_log_warning(
+				'Sokin Pay: Unauthorized order access attempt',
+				array(
+					'source' => 'sokinpay-gateway',
+					'order_id' => $order_id,
+					'current_user_id' => $current_user_id,
+					'order_customer_id' => $order_customer_id,
+				)
+			);
 			return;
 		}
 	}
@@ -155,18 +199,15 @@ function action_woocommerce_thankyou($order_id) {
 		// Only proceed if the orderId matches the stored value for this order
 		if (empty($stored_order_id) || $stored_order_id !== $get_order_id) {
 			// Log mismatch for debugging (could indicate data inconsistency or manipulation attempt)
-			if (function_exists('wc_get_logger')) {
-				$logger = wc_get_logger();
-				$logger->warning(
-					'Sokin Pay: orderId validation failed',
-					array(
-						'source' => 'sokinpay-gateway',
-						'order_id' => $order_id,
-						'stored_order_id' => $stored_order_id,
-						'get_order_id' => $get_order_id,
-					)
-				);
-			}
+			sokin_gateway_log_warning(
+				'Sokin Pay: orderId validation failed',
+				array(
+					'source' => 'sokinpay-gateway',
+					'order_id' => $order_id,
+					'stored_order_id' => $stored_order_id,
+					'get_order_id' => $get_order_id,
+				)
+			);
 			return;
 		}
 
