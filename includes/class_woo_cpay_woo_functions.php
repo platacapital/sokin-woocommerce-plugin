@@ -90,7 +90,7 @@ function sokinpay_create_refund($refund_id, $args) {
 		$json_data = json_decode($res_body, true);
 		// Show error message if we are doing partial payment on same day which is not allowed.
 		// Same day transfer will be fully refunded.
-		if (!$json_data['success'] && 400 == $json_data['status']) {
+		if (is_array($json_data) && isset($json_data['success'], $json_data['status']) && !$json_data['success'] && 400 == $json_data['status']) {
 			throw new Exception(esc_attr($json_data['message']));
 			wp_die();
 		}
