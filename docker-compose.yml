@@ -10,7 +10,7 @@ services:
       - "8080:80"
     volumes:
       - .:/var/www/html/wp-content/plugins/sokin-woocommerce-plugin
-      - wp_uploads:/var/www/html/wp-content/uploads
+      - ./wp-content/uploads:/var/www/html/wp-content/uploads
     environment:
       # WordPress Database
       WORDPRESS_DB_HOST: db:3306
