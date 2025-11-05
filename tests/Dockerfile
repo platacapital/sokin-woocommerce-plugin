@@ -45,8 +45,17 @@ COPY . /var/www/html/wp-content/plugins/sokin-woocommerce-plugin
 COPY ./tests/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# Disable XML-RPC at Apache level (must be done as root)
+RUN echo '<Files "xmlrpc.php">' > /etc/apache2/conf-available/deny-xmlrpc.conf && \
+    echo '    Require all denied' >> /etc/apache2/conf-available/deny-xmlrpc.conf && \
+    echo '</Files>' >> /etc/apache2/conf-available/deny-xmlrpc.conf && \
+    ls -la /etc/apache2/conf-available/deny-xmlrpc.conf && \
+    a2enconf deny-xmlrpc && \
+    ls -la /etc/apache2/conf-enabled/deny-xmlrpc.conf
+
 # Set ownership of WordPress files to non-root user, but keep running as root for entrypoint
 RUN chown -R sokinuser:sokinuser /var/www/html
+
 USER sokinuser
 
 # Add health check for WordPress
@@ -56,3 +65,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # Use the custom entrypoint script
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
+

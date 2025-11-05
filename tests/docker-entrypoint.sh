@@ -24,7 +24,7 @@ echo "Waiting for database connection..."
 DB_HOSTNAME=$(echo "$WORDPRESS_DB_HOST" | cut -d: -f1)
 attempts=0
 # Loop for a maximum of 30 attempts (60 seconds)
-while ! mysqladmin ping -h"$DB_HOSTNAME" --silent; do
+while ! mysqladmin --skip-ssl ping -h"$DB_HOSTNAME" --silent; do
     attempts=$((attempts+1))
     if [ $attempts -gt 30 ]; then
         echo "FATAL: Database connection timed out after 60 seconds."
