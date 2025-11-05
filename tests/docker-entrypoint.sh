@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e # Exit immediately if a command exits with a non-zero status.
 
+# Enable logging to file and stdout
+LOG_FILE="/var/www/html/wp-content/entrypoint.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+touch "$LOG_FILE"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 # --- 1. Set working directory ---
 cd /var/www/html
 
@@ -36,7 +42,7 @@ if [ ! -f /var/www/html/wp-config.php ]; then
                      --dbpass="$WORDPRESS_DB_PASSWORD" \
                      --dbhost="$WORDPRESS_DB_HOST" \
                      --skip-check \
-                     --extra-php="\$_SERVER['HTTPS'] = 'on'; define('FORCE_SSL_ADMIN', true);"
+                     --extra-php="\$_SERVER['HTTPS'] = 'on'; define('FORCE_SSL_ADMIN', true); define('WP_DEBUG', true); define('WP_DEBUG_LOG', true); define('WP_DEBUG_DISPLAY', true); @ini_set('display_errors', 1);"
 fi
 
 # --- 4. Install WordPress ---
@@ -76,6 +82,9 @@ fi
 
 SETTINGS_JSON="{\"enabled\": \"yes\", \"title\": \"Pay by card\", \"description\": \"Powered by Sokin\", \"woo_cpay_redirect_url\": \"${SOKIN_REDIRECT_URL:-https://portal.sandbox.sokin.com/sokinpay/customerPay}\", \"woo_cpay_x_api_key\": \"${SOKIN_X_API_KEY:-dummy_api_key}\", \"woo_cpay_api_url\": \"${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}\"}"
 wp option update woocommerce_sokinpay_gateway_settings "$SETTINGS_JSON" --format=json
+
+# Enable Cash on Delivery to test multiple gateway scenarios (radio buttons in checkout)
+wp option update woocommerce_cod_settings '{"enabled":"yes"}' --format=json
 
 WP_VERSION=$(wp core version 2>/dev/null || echo "Unknown")
 WC_VERSION=$(wp plugin get woocommerce --field=version 2>/dev/null || echo "Unknown")
