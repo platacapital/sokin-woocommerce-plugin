@@ -1,0 +1,25 @@
+# Version control
+.git
+.github/
+.gitignore
+.gitattributes
+
+# Local OS files
+.DS_Store
+
+# Tooling and automation
+package.json
+package-lock.json
+.releaserc.json
+scripts/
+autom.plan.md
+
+# Development assets
+node_modules/
+local-dev/
+tests/
+wp-content/
+docker-compose*
+*.log
+**/docker-entrypoint.sh
+

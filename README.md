@@ -105,6 +105,55 @@ Before going live:
 - Check webhook handling
 - Ensure proper error handling
 
+## Release Process
+
+### Automated (recommended)
+
+1. **Write Conventional Commits**
+   - Only `feat`, `fix`, `perf`, or commits marked as BREAKING CHANGES will trigger a release.
+   - Other commit types (`chore`, `docs`, `ci`, `build`, etc.) are ignored by semantic-release.
+
+2. **Merge to `main`**
+   - The `Release` workflow runs on merges that touch plugin files (`sokinpay.php`, `includes/**`, `assets/**`, `languages/**`, `readme.txt`, etc.).
+   - The workflow can also be run manually from the Actions tab (`workflow_dispatch`).
+
+3. **Semantic-release automation**
+   - Calculates the next version, updates `sokinpay.php`, `readme.txt`, and the WordPress changelog order.
+   - Commits the version bump, creates a `vX.Y.Z` git tag, and publishes a GitHub Release with generated notes and an attached zip built from `.distignore` (no `docker-entrypoint.sh`).
+
+4. **WordPress.org deployment**
+   - The `Deploy to WordPress.org` workflow fires when the GitHub Release is published.
+   - It rebuilds a clean `dist/` payload, reuses the release zip, and pushes the new version to the WordPress.org plugin SVN using `WPORG_USERNAME`/`WPORG_PASSWORD` secrets.
+   - Download the `sokin-woocommerce-plugin-vX.Y.Z.zip` asset from the release if you need to upload to any additional marketplaces.
+
+5. **Verify**
+   - Confirm the release and tag exist, the WordPress.org listing shows the new version, and the plugin files reflect the bumped version.
+
+### Manual fallback
+
+If the automation is unavailable, follow these steps instead:
+
+1. Update `sokinpay.php` and `readme.txt` with the new version and changelog entry.
+2. Commit and push the changes to `main`.
+3. Create a GitHub Release targeting `main`, adding a new `vX.Y.Z` tag and release notes.
+4. Package the plugin manually, mirroring `.distignore` exclusions:
+   ```bash
+   zip -r sokin-woocommerce-plugin-vX.Y.Z.zip . \
+     -x "**/.git*" "**/.DS_Store" "local-dev/*" "tests/*" "wp-content/*" \
+        "docker-compose*" "*.log" "**/docker-entrypoint.sh" "scripts/*" \
+        "package.json" "package-lock.json" ".releaserc.json" ".distignore"
+   ```
+5. Upload the archive to the WordPress marketplace entry and publish.
+
+#### GitHub secrets
+
+Before relying on the automation, add these repository secrets:
+
+- `WPORG_USERNAME`
+- `WPORG_PASSWORD`
+
+The workflows assume the WordPress.org slug is `sokin-woocommerce-plugin` (configured via the `PLUGIN_SLUG` environment variable).
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.

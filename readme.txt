@@ -60,26 +60,10 @@ Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and 
 
 == Changelog ==
 
-= 1.0.0 =
-* Release Date -  August 21, 2024
+= 1.0.5 =
+* Release Date - November 06, 2025*
 
-* Initial release
-
-= 1.0.1 =
-* Release Date - September 24, 2024*
-
-* Checkout page redirection fixed
-
-= 1.0.2 =
-* Release Date - November 13, 2024*
-
-* Changed default Order Status from 'Completed' to 'Processing' on success of Payment
-
-= 1.0.3 =
-* Release Date - November 26, 2024*
-
-* Integrated Cart and Checkout Block-Support feature.
-* Now, the plugin is compatible with both Classic WooCommerce shortcode checkout and Block checkout transformation.
+* Enhance SokinPay payment handling on thank you page.
 
 = 1.0.4 =
 * Release Date - April 23, 2025*
@@ -88,7 +72,23 @@ Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and 
 * Applied QIT (Quality Improvement Tool) fixes to improve code quality and maintainability.
 * Added extra validation checks to prevent warnings and fatal errors on the WooCommerce Thank You page after payment.
 
-= 1.0.5 =
-* Release Date - November 06, 2025*
+= 1.0.3 =
+* Release Date - November 26, 2024*
 
-* Enhance SokinPay payment handling on thank you page.
+* Integrated Cart and Checkout Block-Support feature.
+* Now, the plugin is compatible with both Classic WooCommerce shortcode checkout and Block checkout transformation.
+
+= 1.0.2 =
+* Release Date - November 13, 2024*
+
+* Changed default Order Status from 'Completed' to 'Processing' on success of Payment
+
+= 1.0.1 =
+* Release Date - September 24, 2024*
+
+* Checkout page redirection fixed
+
+= 1.0.0 =
+* Release Date -  August 21, 2024
+
+* Initial release
