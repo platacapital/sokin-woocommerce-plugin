@@ -17,6 +17,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+          check-latest: true
+
+      - name: Prepare version files from release tag/body
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          B64=$(printf '%s' "$RELEASE_BODY" | base64 | tr -d '\n')
+          node scripts/bump-wp-version.mjs "$VERSION" "$B64"
+
       - name: Build distributable
         run: |
           rsync -rc --delete --exclude-from='.distignore' ./ ./dist/

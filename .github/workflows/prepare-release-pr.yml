@@ -1,0 +1,96 @@
+name: Prepare Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        type: choice
+        required: true
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
+      notes:
+        description: "Optional release notes (Markdown). Defaults to a generic message."
+        type: string
+        required: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+          check-latest: true
+
+      - name: Determine current version
+        id: cur
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git describe --tags --abbrev=0 >/dev/null 2>&1; then
+            TAG=$(git describe --tags --abbrev=0)
+            CUR=${TAG#v}
+          else
+            CUR=$(grep -Eo "\*\s*Version:\s*[^\r\n]+" sokinpay.php | awk '{print $3}')
+          fi
+          echo "current=$CUR" >> "$GITHUB_OUTPUT"
+
+      - name: Compute next version
+        id: next
+        env:
+          CUR: ${{ steps.cur.outputs.current }}
+          BUMP: ${{ inputs.bump }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          IFS='.' read -r MA MI PA <<< "${CUR:-0.0.0}"
+          MA=${MA:-0}; MI=${MI:-0}; PA=${PA:-0}
+          case "$BUMP" in
+            major) MA=$((MA+1)); MI=0; PA=0;;
+            minor) MI=$((MI+1)); PA=0;;
+            patch) PA=$((PA+1));;
+            *) echo "Unknown bump: $BUMP" >&2; exit 1;;
+          esac
+          NEXT="$MA.$MI.$PA"
+          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+
+      - name: Run bump script
+        env:
+          VERSION: ${{ steps.next.outputs.version }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          B64=$(printf '%s' "${NOTES:-Maintenance updates.}" | base64 | tr -d '\n')
+          node scripts/bump-wp-version.mjs "$VERSION" "$B64"
+
+      - name: Create release PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: release/v${{ steps.next.outputs.version }}
+          base: main
+          commit-message: |
+            chore(release): v${{ steps.next.outputs.version }}
+          title: |
+            release: v${{ steps.next.outputs.version }}
+          body: |
+            Prepares the release bump to v${{ steps.next.outputs.version }}.
+
+            - Updates `sokinpay.php` and `readme.txt`
+            - Changelog is kept newest-first
+
+            After merging this PR, the Release workflow will tag and publish.
+          labels: release
+
