@@ -87,3 +87,8 @@ Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and 
 * Fixed all PHPCS errors to meet WordPress coding standards.
 * Applied QIT (Quality Improvement Tool) fixes to improve code quality and maintainability.
 * Added extra validation checks to prevent warnings and fatal errors on the WooCommerce Thank You page after payment.
+
+= 1.0.5 =
+* Release Date - November 06, 2025*
+
+* Enhance SokinPay payment handling on thank you page.
