@@ -242,7 +242,11 @@ function action_woocommerce_thankyou($order_id) {
 					wc_add_notice(__('Your payment was declined. Please try again or choose a different payment method.', 'sokinpay'), 'error');
 					wp_safe_redirect($order->get_checkout_payment_url());
 					exit;
-				} elseif (('PROCESSED' === $order_status || 'IN-PROGRESS' === $order_status) && 'declined' !== $payment_status) {
+				} elseif ((
+					'PROCESSED' === $order_status ||
+					'IN-PROGRESS' === $order_status ||
+					'PENDING' === $order_status
+				) && 'declined' !== $payment_status) {
 					$order->update_status('processing');
 					$order->save();
 					$order->payment_complete();
