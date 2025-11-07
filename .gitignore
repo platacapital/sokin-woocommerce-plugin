@@ -129,3 +129,18 @@ wp-config.php
 
 
 # End of https://www.toptal.com/developers/gitignore/api/wordpress,php,windows,linux,macos
+
+### IDEs ###
+.vscode/
+*.code-workspace
+.cursor/
+.cursorignore
+.idea/
+*.iml
+.fleet/
+.history/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*.swn
