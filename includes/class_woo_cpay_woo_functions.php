@@ -456,7 +456,18 @@ function woo_cpay_init_gateway_class() {
 				return null;
 			}
 
-			return isset($numeric_map[$alpha2]) ? $numeric_map[$alpha2] : null;
+			return $numeric_map[$alpha2] ?? null;
+		}
+
+		/**
+		 * Normalize address values for comparison and payload generation.
+		 * Ensures null and empty strings are treated equivalently.
+		 *
+		 * @param mixed $value
+		 * @return string|mixed
+		 */
+		private function normalizeAddressValue($value) {
+			return (null === $value || '' === $value) ? '' : $value;
 		}
 
 		/*
@@ -488,7 +499,6 @@ function woo_cpay_init_gateway_class() {
 		$billing_address = array(
 			'line1' => $order->get_billing_address_1(),
 			'line2' => $order->get_billing_address_2(),
-			'line3' => '',
 			'city' => $order->get_billing_city(),
 			'state' => $order->get_billing_state(),
 			'post_code' => $order->get_billing_postcode(),
@@ -498,7 +508,6 @@ function woo_cpay_init_gateway_class() {
 		$shipping_address = array(
 			'line1' => $order->get_shipping_address_1(),
 			'line2' => $order->get_shipping_address_2(),
-			'line3' => '',
 			'city' => $order->get_shipping_city(),
 			'state' => $order->get_shipping_state(),
 			'post_code' => $order->get_shipping_postcode(),
@@ -514,10 +523,10 @@ function woo_cpay_init_gateway_class() {
 
 			if (!empty($shipping_values)) {
 				foreach ($shipping_address as $key => $value) {
-					$billing_value = isset($billing_address[$key]) ? $billing_address[$key] : null;
+					$billing_value = $billing_address[$key] ?? null;
 
-					$normalized_billing = (null === $billing_value || '' === $billing_value) ? '' : $billing_value;
-					$normalized_shipping = (null === $value || '' === $value) ? '' : $value;
+					$normalized_billing = $this->normalizeAddressValue($billing_value);
+					$normalized_shipping = $this->normalizeAddressValue($value);
 
 					if ($normalized_shipping !== $normalized_billing) {
 						$should_include_shipping = true;
