@@ -60,6 +60,11 @@ Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and 
 
 == Changelog ==
 
+= 1.0.6 =
+* Release Date - December 02, 2025*
+* Updated billing and shipping address payloads to comply with Sokin's new address schema, including ISO numeric country codes.
+* Improved shipping address handling to only send shipping details when they differ from the billing address, reducing API validation issues.
+
 = 1.0.5 =
 * Release Date - November 06, 2025*
 
