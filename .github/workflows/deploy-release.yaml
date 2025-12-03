@@ -13,12 +13,12 @@ on:
         description: 'WordPress version'
         required: false
         type: string
-        default: '6.8.1'
+        default: '6.9'
       php_version:
         description: 'PHP version'
         required: false
         type: string
-        default: '8.4'
+        default: '8.5'
       wp_cli_version:
         description: 'WP-CLI version'
         required: false
@@ -28,7 +28,7 @@ on:
         description: 'WooCommerce version'
         required: false
         type: string
-        default: '9.9.5'
+        default: '10.3.6'
 
 permissions:
   contents: read
