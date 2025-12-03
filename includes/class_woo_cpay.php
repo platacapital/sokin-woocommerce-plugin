@@ -17,7 +17,7 @@ class WooCPay {
 		if (defined('PLUGIN_NAME_VERSION')) {
 			$this->version = PLUGIN_NAME_VERSION;
 		} else {
-			$this->version = '1.0.3';
+			$this->version = '1.1.0';
 		}
 		$this->plugin_name = 'Sokin Pay';
 

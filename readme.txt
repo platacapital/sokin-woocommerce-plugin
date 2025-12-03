@@ -1,11 +1,11 @@
 === Sokin Pay ===
 Contributors: Sokin
-Version: 1.0.3
+Version: 1.1.0
 Tags: sokinpay
 Requires at least: 6.5
-Tested up to: 6.7.1
+Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,7 +60,7 @@ Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and 
 
 == Changelog ==
 
-= 1.0.6 =
+= 1.1.0 =
 * Release Date - December 02, 2025*
 * Updated billing and shipping address payloads to comply with Sokin's new address schema, including ISO numeric country codes.
 * Improved shipping address handling to only send shipping details when they differ from the billing address, reducing API validation issues.
