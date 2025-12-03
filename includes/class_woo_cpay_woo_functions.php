@@ -182,9 +182,9 @@ function action_woocommerce_thankyou($order_id) {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$status = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : '';
 	if ('return' === $status) {
-		$order->update_status('pending', __('Customer returned from Sokin without paying.', 'sokinpay'));
+		$order->update_status('pending', __('Customer returned from Sokin without paying.', 'sokin-pay'));
 		$order->save();
-		wc_add_notice(__('You cancelled the payment. Please try again.', 'sokinpay'), 'notice');
+		wc_add_notice(__('You cancelled the payment. Please try again.', 'sokin-pay'), 'notice');
 		wp_safe_redirect($order->get_checkout_payment_url());
 		exit;
 	}
@@ -237,9 +237,9 @@ function action_woocommerce_thankyou($order_id) {
 				$order_status   = $json_data['data']['order']['orderStatus'];
 				$payment_status = strtolower((string) $json_data['data']['order']['payments'][0]['status']);
 				if ('declined' === $payment_status) {
-					$order->update_status('failed', __('Payment declined by Sokin.', 'sokinpay'));
+					$order->update_status('failed', __('Payment declined by Sokin.', 'sokin-pay'));
 					$order->save();
-					wc_add_notice(__('Your payment was declined. Please try again or choose a different payment method.', 'sokinpay'), 'error');
+					wc_add_notice(__('Your payment was declined. Please try again or choose a different payment method.', 'sokin-pay'), 'error');
 					wp_safe_redirect($order->get_checkout_payment_url());
 					exit;
 				} elseif ((
@@ -330,9 +330,9 @@ function woo_cpay_init_gateway_class() {
 					'desc_tip'    => true,
 				),
 				'description' => array(
-					'title'       => __('Description', 'sokinpay'),
+					'title'       => __('Description', 'sokin-pay'),
 					'type'        => 'text',
-					'description' => __('Payment description that the customer will see on your checkout.', 'sokinpay'),
+					'description' => __('Payment description that the customer will see on your checkout.', 'sokin-pay'),
 					'desc_tip'    => true
 				),
 				'woo_cpay_redirect_url' => array(
@@ -485,7 +485,7 @@ function woo_cpay_init_gateway_class() {
 		}
 
 		// Set order status
-		$order->update_status($status, __('Checkout with custom payment. ', 'sokinpay'));
+		$order->update_status($status, __('Checkout with custom payment. ', 'sokin-pay'));
 
 		// Reduce stock levels
 		$order->reduce_order_stock();
