@@ -1,10 +1,13 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { exec as execCallback } from 'node:child_process';
+import { promisify } from 'node:util';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
+const exec = promisify(execCallback);
 
 const newVersion = process.argv[2];
 if (!newVersion) {
@@ -13,7 +16,18 @@ if (!newVersion) {
 }
 
 const encodedNotes = process.argv[3] ?? process.env.RELEASE_NOTES_B64 ?? '';
-const releaseNotes = decodeReleaseNotes(encodedNotes).replace(/\r\n/g, '\n');
+let releaseNotes = decodeReleaseNotes(encodedNotes).replace(/\r\n/g, '\n').trim();
+
+// If no explicit notes were provided, try to derive them automatically from git history.
+if (!releaseNotes) {
+  try {
+    releaseNotes = await deriveNotesFromGit();
+  } catch (error) {
+    console.warn(
+      'Unable to derive release notes from git history; falling back to default maintenance message.'
+    );
+  }
+}
 
 await updatePluginVersion(newVersion);
 await updateReadme(newVersion, releaseNotes);
@@ -121,6 +135,36 @@ async function updateReadme(version, notes) {
     changelogData.prefix + changelogData.heading + rebuiltChangelog;
 
   await writeFile(readmePath, ensureTrailingNewline(updatedContents));
+}
+
+async function deriveNotesFromGit() {
+  // Attempt to derive release notes from git commit subjects since the last tag.
+  // This is a best-effort helper for manual releases and is not critical for the bump.
+  try {
+    const { stdout: tagStdout } = await exec('git describe --tags --abbrev=0');
+    const previousTag = tagStdout.trim();
+
+    const range = previousTag ? `${previousTag}..HEAD` : 'HEAD';
+    const { stdout: logStdout } = await exec(
+      `git log ${range} --no-merges --pretty=format:%s`
+    );
+
+    const lines = logStdout
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    // If we couldn't find any commits, return an empty string and let the
+    // changelog builder fall back to a generic maintenance message.
+    if (lines.length === 0) {
+      return '';
+    }
+
+    return lines.join('\n');
+  } catch (error) {
+    console.warn('Error while reading git history for release notes.', error);
+    return '';
+  }
 }
 
 function extractChangelog(contents) {
