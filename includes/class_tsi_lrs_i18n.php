@@ -32,13 +32,7 @@ class Tsi_Lrs_I18n {
 	 * @since    1.0.0
 	 */
 	public function load_plugin_textdomain() {
-
-		load_plugin_textdomain(
-			'tsi-lrs',
-			false,
-			dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/'
-		);
-
+		// No-op: WordPress.org auto-loads translations for plugin slugs since 4.6.
 	}
 
 
