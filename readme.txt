@@ -1,11 +1,11 @@
 === Sokin Pay ===
 Contributors: Sokin
-Version: 1.1.0
+Version: 1.1.1
 Tags: sokinpay
 Requires at least: 6.5
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,40 +60,30 @@ Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and 
 
 == Changelog ==
 
+= 1.1.1 =
+* Released: 2025-12-03
+* Keep all internal WordPress metadata and plugin constants in sync with the tagged version.
+* Update enqueued script and style version strings so they match the plugin version.
+* Extend the bump script to update all versioned PHP locations automatically.
+* No functional behavior changes; maintenance-only release.
+
 = 1.1.0 =
 * Release Date - December 02, 2025*
-* Updated billing and shipping address payloads to comply with Sokin's new address schema, including ISO numeric country codes.
-* Improved shipping address handling to only send shipping details when they differ from the billing address, reducing API validation issues.
 
 = 1.0.5 =
 * Release Date - November 06, 2025*
 
-* Enhance SokinPay payment handling on thank you page.
-
 = 1.0.4 =
 * Release Date - April 23, 2025*
-
-* Fixed all PHPCS errors to meet WordPress coding standards.
-* Applied QIT (Quality Improvement Tool) fixes to improve code quality and maintainability.
-* Added extra validation checks to prevent warnings and fatal errors on the WooCommerce Thank You page after payment.
 
 = 1.0.3 =
 * Release Date - November 26, 2024*
 
-* Integrated Cart and Checkout Block-Support feature.
-* Now, the plugin is compatible with both Classic WooCommerce shortcode checkout and Block checkout transformation.
-
 = 1.0.2 =
 * Release Date - November 13, 2024*
-
-* Changed default Order Status from 'Completed' to 'Processing' on success of Payment
 
 = 1.0.1 =
 * Release Date - September 24, 2024*
 
-* Checkout page redirection fixed
-
 = 1.0.0 =
 * Release Date -  August 21, 2024
-
-* Initial release

@@ -118,8 +118,9 @@ Before going live:
    - The workflow can also be run manually from the Actions tab (`workflow_dispatch`).
 
 3. **Semantic-release automation**
-   - Calculates the next version, updates `sokinpay.php`, `readme.txt`, and the WordPress changelog order.
+   - Calculates the next version and uses `scripts/bump-wp-version.mjs` to update `sokinpay.php`, `readme.txt`, the WordPress changelog order, and all internal versioned constants/script/style handles used by WooCommerce.
    - Commits the version bump, creates a `vX.Y.Z` git tag, and publishes a GitHub Release with generated notes and an attached zip built from `.distignore` (no `docker-entrypoint.sh`).
+   - When triggered via the **Prepare Release PR** workflow, any `notes` you provide are fed into the bump script and included in the `readme.txt` changelog entry for that version.
 
 4. **WordPress.org deployment**
    - The `Deploy to WordPress.org` workflow fires when the GitHub Release is published.
@@ -133,7 +134,7 @@ Before going live:
 
 If the automation is unavailable, follow these steps instead:
 
-1. Update `sokinpay.php` and `readme.txt` with the new version and changelog entry.
+1. Update `sokinpay.php` and `readme.txt` with the new version and changelog entry, ensuring all internal version fields (plugin header, `WOO_CUSTOM_PAYMENT` constant, class version, and script/style versions) are kept in sync.
 2. Commit and push the changes to `main`.
 3. Create a GitHub Release targeting `main`, adding a new `vX.Y.Z` tag and release notes.
 4. Package the plugin manually, mirroring `.distignore` exclusions:
