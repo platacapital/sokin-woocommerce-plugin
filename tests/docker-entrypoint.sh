@@ -61,13 +61,40 @@ if ! wp plugin is-installed woocommerce; then
     wp plugin install woocommerce --version="${WOOCOMMERCE_VERSION:-9.9.5}" --activate
 fi
 
-if ! wp plugin is-active sokin-woocommerce-plugin; then
-    wp plugin activate sokin-woocommerce-plugin
+if ! wp plugin is-active sokin-pay; then
+    wp plugin activate sokin-pay
 fi
 
-# --- 6. Configure Options ---
+# --- 6. Normalize plugin tree to match release ZIP ---
+PLUGIN_DIR="/var/www/html/wp-content/plugins/sokin-pay"
+
+# Remove development-only directories and files that are excluded from the release archive
+rm -rf \
+  "$PLUGIN_DIR/local-dev" \
+  "$PLUGIN_DIR/tests" \
+  "$PLUGIN_DIR/wp-content" \
+  "$PLUGIN_DIR/scripts" \
+  "$PLUGIN_DIR/.github"
+
+rm -f \
+  "$PLUGIN_DIR"/docker-compose* \
+  "$PLUGIN_DIR"/*.log \
+  "$PLUGIN_DIR"/package.json \
+  "$PLUGIN_DIR"/package-lock.json \
+  "$PLUGIN_DIR"/.releaserc.json \
+  "$PLUGIN_DIR"/.distignore
+
+# Clean common hidden cruft (matches README packaging excludes for .git* and .DS_Store)
+find "$PLUGIN_DIR" \( -name '.git*' -o -name '.DS_Store' \) -prune -exec rm -rf {} + 2>/dev/null || true
+
+# Install & activate Plugin Check (PCP) for local/plugin CI analysis
+if ! wp plugin is-installed plugin-check; then
+    wp plugin install plugin-check --activate
+fi
+
+# --- 7. Configure Options ---
 # With plugins active, we can now fetch metadata and set final options.
-PLUGIN_VERSION=$(wp eval 'echo get_plugin_data(WP_PLUGIN_DIR . "/sokin-woocommerce-plugin/sokinpay.php")["Version"];' 2>/dev/null || echo "Unknown")
+PLUGIN_VERSION=$(wp eval 'echo get_plugin_data(WP_PLUGIN_DIR . "/sokin-pay/sokinpay.php")["Version"];' 2>/dev/null || echo "Unknown")
 
 # Dynamically set final site title based on VIRTUAL_HOST.
 if [[ "$VIRTUAL_HOST" == *pr-* ]]; then
@@ -95,7 +122,7 @@ wp option update woocommerce_coming_soon "no"
 wp option update woocommerce_demo_store "yes"
 wp option update woocommerce_demo_store_notice "$NOTICE_TEXT"
 
-# --- 7. Import Data ---
+# --- 8. Import Data ---
 SAMPLE_XML="/var/www/html/wp-content/plugins/woocommerce/sample-data/sample_products.xml"
 if [ -f "$SAMPLE_XML" ]; then
     if ! wp plugin is-active wordpress-importer; then

@@ -38,8 +38,8 @@ RUN set -ex; \
     # Verify it runs
     wp --info --allow-root
 
-# Copy your custom plugin code
-COPY . /var/www/html/wp-content/plugins/sokin-woocommerce-plugin
+# Copy your custom plugin code (directory name must match wp.org slug: sokin-pay)
+COPY . /var/www/html/wp-content/plugins/sokin-pay
 
 # Copy the custom entrypoint script
 COPY ./tests/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
