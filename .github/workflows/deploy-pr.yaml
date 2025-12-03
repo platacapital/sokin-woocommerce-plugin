@@ -8,13 +8,6 @@ permissions:
   pull-requests: write
   contents: read
 
-env:
-  # Default versions for PR deployments
-  WORDPRESS_VERSION: "6.8.1"
-  PHP_VERSION: "8.4"
-  WP_CLI_VERSION: "2.12.0"
-  WOOCOMMERCE_VERSION: "9.9.5"
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -42,11 +35,6 @@ jobs:
           push: true
           file: ./tests/Dockerfile
           tags: ${{ secrets.ECR_URL }}:pr-${{ github.sha }}
-          build-args: |
-            WORDPRESS_VERSION=${{ env.WORDPRESS_VERSION }}
-            PHP_VERSION=${{ env.PHP_VERSION }}
-            WP_CLI_VERSION=${{ env.WP_CLI_VERSION }}
-            WOOCOMMERCE_VERSION=${{ env.WOOCOMMERCE_VERSION }}
 
   deploy:
     runs-on: ubuntu-latest

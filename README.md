@@ -114,13 +114,14 @@ Before going live:
    - Other commit types (`chore`, `docs`, `ci`, `build`, etc.) are ignored by semantic-release.
 
 2. **Merge to `main`**
-   - The `Release` workflow runs on merges that touch plugin files (`sokinpay.php`, `includes/**`, `assets/**`, `languages/**`, `readme.txt`, etc.).
+   - The `Release` workflow is triggered on merges that touch plugin files (`sokinpay.php`, `includes/**`, `assets/**`, `languages/**`, `readme.txt`, etc.), but the release job only runs for the `chore(release): vX.Y.Z` merge commit from the Release PR.
    - The workflow can also be run manually from the Actions tab (`workflow_dispatch`).
 
 3. **Semantic-release automation**
    - Calculates the next version and uses `scripts/bump-wp-version.mjs` to update `sokinpay.php`, `readme.txt`, the WordPress changelog order, and all internal versioned constants/script/style handles used by WooCommerce.
    - Commits the version bump, creates a `vX.Y.Z` git tag, and publishes a GitHub Release with generated notes and an attached zip built from `.distignore` (no `docker-entrypoint.sh`).
    - When triggered via the **Prepare Release PR** workflow, any `notes` you provide are fed into the bump script and included in the `readme.txt` changelog entry for that version.
+   - The `Release` workflow only runs automatically when the `chore(release): vX.Y.Z` merge commit from the Release PR hits `main`, or when manually dispatched from Actions.
 
 4. **WordPress.org deployment**
    - The `Deploy to WordPress.org` workflow fires when the GitHub Release is published.

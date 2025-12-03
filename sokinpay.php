@@ -8,12 +8,12 @@
  * Author: Sokin
  * Author URI:
  * Requires at least: 6.5
- * Tested up to: 6.6.1
+ * Tested up to: 6.9
  * Requires PHP: 7.4
  * Stable tag: sokinpay
  * License: GPLv2 or later
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: sokinpay
+ * Text Domain: sokin-pay
  */
 
 
