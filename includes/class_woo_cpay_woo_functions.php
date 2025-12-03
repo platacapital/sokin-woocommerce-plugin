@@ -113,9 +113,11 @@ function sokin_gateway_log_warning($message, $context = array()) {
 	$uploads = wp_upload_dir();
 	$basedir = isset($uploads['basedir']) ? $uploads['basedir'] : '';
 	$logs_dir = trailingslashit($basedir) . 'wc-logs';
-	$base_writable = is_dir($basedir) && (function_exists('wp_is_writable') ? wp_is_writable($basedir) : is_writable($basedir));
+
+	// Prefer WordPress API for filesystem checks; avoid direct is_writable().
+	$base_writable = is_dir($basedir) && (function_exists('wp_is_writable') ? wp_is_writable($basedir) : false);
 	$logs_writable = is_dir($logs_dir)
-		? (function_exists('wp_is_writable') ? wp_is_writable($logs_dir) : is_writable($logs_dir))
+		? (function_exists('wp_is_writable') ? wp_is_writable($logs_dir) : false)
 		: $base_writable;
 
 	if (function_exists('wc_get_logger') && $logs_writable) {

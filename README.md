@@ -154,7 +154,7 @@ Before relying on the automation, add these repository secrets:
 - `WPORG_USERNAME`
 - `WPORG_PASSWORD`
 
-The workflows assume the WordPress.org slug is `sokin-woocommerce-plugin` (configured via the `PLUGIN_SLUG` environment variable).
+The workflows assume the WordPress.org slug is `sokin-pay` (configured via the `PLUGIN_SLUG` environment variable), while the GitHub repository name remains `sokin-woocommerce-plugin`.
 
 ## Contributing
 
