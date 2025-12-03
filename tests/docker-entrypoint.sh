@@ -65,6 +65,11 @@ if ! wp plugin is-active sokin-woocommerce-plugin; then
     wp plugin activate sokin-woocommerce-plugin
 fi
 
+# Install & activate Plugin Check (PCP) for local/plugin CI analysis
+if ! wp plugin is-installed plugin-check; then
+    wp plugin install plugin-check --activate
+fi
+
 # --- 6. Configure Options ---
 # With plugins active, we can now fetch metadata and set final options.
 PLUGIN_VERSION=$(wp eval 'echo get_plugin_data(WP_PLUGIN_DIR . "/sokin-woocommerce-plugin/sokinpay.php")["Version"];' 2>/dev/null || echo "Unknown")
