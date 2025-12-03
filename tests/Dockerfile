@@ -1,8 +1,8 @@
 # Accept build arguments for version management
-ARG WORDPRESS_VERSION=6.8.1
-ARG PHP_VERSION=8.4
+ARG WORDPRESS_VERSION=beta-6.9
+ARG PHP_VERSION=8.5
 ARG WP_CLI_VERSION=2.12.0
-ARG WOOCOMMERCE_VERSION=9.9.5
+ARG WOOCOMMERCE_VERSION=10.3.6
 
 FROM wordpress:${WORDPRESS_VERSION}-php${PHP_VERSION}-apache
 
@@ -22,10 +22,11 @@ ENV WOOCOMMERCE_VERSION=${WOOCOMMERCE_VERSION}
 RUN groupadd -r sokinuser && useradd -r -g sokinuser sokinuser
 
 # Install necessary packages: curl, less and MySQL client (for WP-CLI)
+# Note: Do not pin versions here so the image remains compatible across Debian releases.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl=7.88.1-10+deb12u12 \
-    less=590-2.1~deb12u2 \
-    default-mysql-client=1.1.0 \
+    curl \
+    less \
+    default-mysql-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
