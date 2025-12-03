@@ -10,7 +10,7 @@ permissions:
 
 env:
   # Default versions for PR deployments
-  WORDPRESS_VERSION: "6.9"
+  WORDPRESS_VERSION: "beta-6.9"
   PHP_VERSION: "8.5"
   WP_CLI_VERSION: "2.12.0"
   WOOCOMMERCE_VERSION: "10.3.6"

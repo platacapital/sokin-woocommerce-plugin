@@ -13,7 +13,7 @@ on:
         description: 'WordPress version'
         required: false
         type: string
-        default: '6.9'
+        default: '6.8'
       php_version:
         description: 'PHP version'
         required: false
