@@ -556,9 +556,6 @@ function woo_cpay_init_gateway_class() {
 			'lastName' => $order->get_billing_last_name(),
 			'email' => $order->get_billing_email(),
 			'billing_address' => $billing_address,
-			'save_card' => true,
-			'payment_method' => [],
-			'isExternal' => true
 		);
 
 		if ($should_include_shipping) {
