@@ -179,6 +179,8 @@ For detailed documentation:
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This plugin is licensed under the terms of the [GNU General Public License v2 or later](LICENSE), consistent with the WordPress.org plugin directory requirements.
+
+Sokin is a trading name of Plata Capital Ltd. For information about how Sokin is regulated and the terms under which Sokin services are provided, please refer to the legal and regulatory information on [sokin.com](https://sokin.com) and the region-specific terms and policies listed on the [Sokin Legal](https://sokin.com/legal) page.
 
 While not required by the license, we appreciate contributions back to the project. See our [CONTRIBUTING.md](CONTRIBUTING.md) guidelines for details on how to help improve this plugin.
