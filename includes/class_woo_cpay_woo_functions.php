@@ -378,7 +378,7 @@ function woo_cpay_init_gateway_class() {
 				'woocommerce_woo_cpay_js',
 				plugins_url('woo_cpay_js.js', __FILE__),
 				array('jquery'),
-				'1.1.2',
+				'1.1.3',
 				true
 			);
 			wp_enqueue_script('woocommerce_woo_cpay_js');

@@ -4,7 +4,7 @@
  * Plugin Name: Sokin Pay
  * Plugin URI:
  * Description: This plugin seamlessly integrates with your WooCommerce store, providing a secure and efficient way to process payments. Enable a variety of secure payment options, including credit cards and pay by bank.
- * Version: 1.1.2
+ * Version: 1.1.3
  * Author: Sokin
  * Author URI:
  * Requires at least: 6.5
@@ -26,7 +26,7 @@ if (!defined('WPINC')) {
 /**
  * Define plugin's Version constant
  */
-define('WOO_CUSTOM_PAYMENT', '1.1.2');
+define('WOO_CUSTOM_PAYMENT', '1.1.3');
 
 /**
  * The code that runs during plugin activation
@@ -40,7 +40,7 @@ function activate_woo_cpay() {
  * Register the stylesheet
  */
 function register_sokinpay_gateway_styles() {
-	wp_register_style('sokinpay_gateway_style', plugin_dir_url(__FILE__) . 'assets/css/style.css', array(), '1.1.2', 'all');
+	wp_register_style('sokinpay_gateway_style', plugin_dir_url(__FILE__) . 'assets/css/style.css', array(), '1.1.3', 'all');
 	wp_enqueue_style('sokinpay_gateway_style');
 }
 
@@ -67,7 +67,7 @@ function register_sokinpay_gateway_scripts($hook) {
 		'sokinpay_gateway_js',
 		plugin_dir_url(__FILE__) . 'includes/js/woo_cpay_js.js',
 		array('jquery'),
-		'1.1.2',
+		'1.1.3',
 		true
 	);
 	wp_enqueue_script('sokinpay_gateway_js');

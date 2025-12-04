@@ -1,11 +1,11 @@
 === Sokin Pay ===
 Contributors: Sokin
-Version: 1.1.2
+Version: 1.1.3
 Tags: woocommerce, payments, payment gateway, credit card, ecommerce
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -67,6 +67,12 @@ Is WooCommerce plugin mandatory for Sokin Pay plugin?
 Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and data.
 
 == Changelog ==
+
+= 1.1.3 =
+* Released: 2025-12-04
+* fix: restrict script registration to WooCommerce order screens
+* chore: update license to GNU GPL v2 and enhance documentation
+* refactor: remove unused parameters from order payload
 
 = 1.1.2 =
 * Released: 2025-12-04
