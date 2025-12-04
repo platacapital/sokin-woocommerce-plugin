@@ -10,7 +10,6 @@
  * Requires at least: 6.5
  * Tested up to: 6.9
  * Requires PHP: 7.4
- * Stable tag: sokinpay
  * License: GPLv2 or later
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: sokin-pay
@@ -49,10 +48,28 @@ function register_sokinpay_gateway_styles() {
 add_action('wp_enqueue_scripts', 'register_sokinpay_gateway_styles');
 
 /**
- * Register custom javascript file for Admin panel pages use only
+ * Register custom javascript file for Admin order screens.
  */
 function register_sokinpay_gateway_scripts($hook) {
-	wp_register_script('sokinpay_gateway_js', plugin_dir_url(__FILE__) . 'includes/js/woo_cpay_js.js', array(), '1.1.2', array('in_footer' => true));
+	// Only load on post edit screens for WooCommerce orders.
+	if ('post.php' !== $hook && 'post-new.php' !== $hook) {
+		return;
+	}
+
+	if (function_exists('get_current_screen')) {
+		$screen = get_current_screen();
+		if (!$screen || 'shop_order' !== $screen->post_type) {
+			return;
+		}
+	}
+
+	wp_register_script(
+		'sokinpay_gateway_js',
+		plugin_dir_url(__FILE__) . 'includes/js/woo_cpay_js.js',
+		array('jquery'),
+		'1.1.2',
+		true
+	);
 	wp_enqueue_script('sokinpay_gateway_js');
 }
 
