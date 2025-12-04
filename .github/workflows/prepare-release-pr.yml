@@ -2,20 +2,6 @@ name: Prepare Release PR
 
 on:
   workflow_dispatch:
-    inputs:
-      bump:
-        description: "Version bump type"
-        type: choice
-        required: true
-        default: patch
-        options:
-          - patch
-          - minor
-          - major
-      notes:
-        description: "Optional release notes (Markdown). Defaults to a generic message."
-        type: string
-        required: false
 
 jobs:
   prepare:
@@ -28,6 +14,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,62 +22,40 @@ jobs:
           node-version: '22.14.0'
           check-latest: true
 
-      - name: Determine current version
-        id: cur
-        shell: bash
-        run: |
-          set -euo pipefail
-          if git describe --tags --abbrev=0 >/dev/null 2>&1; then
-            TAG=$(git describe --tags --abbrev=0)
-            CUR=${TAG#v}
-          else
-            CUR=$(grep -Eo "\*\s*Version:\s*[^\r\n]+" sokinpay.php | awk '{print $3}')
-          fi
-          echo "current=$CUR" >> "$GITHUB_OUTPUT"
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Compute next version
+      - name: Compute next version and notes from commits
         id: next
-        env:
-          CUR: ${{ steps.cur.outputs.current }}
-          BUMP: ${{ inputs.bump }}
-        shell: bash
         run: |
           set -euo pipefail
-          IFS='.' read -r MA MI PA <<< "${CUR:-0.0.0}"
-          MA=${MA:-0}; MI=${MI:-0}; PA=${PA:-0}
-          case "$BUMP" in
-            major) MA=$((MA+1)); MI=0; PA=0;;
-            minor) MI=$((MI+1)); PA=0;;
-            patch) PA=$((PA+1));;
-            *) echo "Unknown bump: $BUMP" >&2; exit 1;;
-          esac
-          NEXT="$MA.$MI.$PA"
-          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+          JSON=$(node scripts/compute-next-version.mjs)
+          echo "$JSON"
+          VERSION=$(echo "$JSON" | jq -r '.version')
+          NOTES=$(echo "$JSON" | jq -r '.notes')
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "No next version computed; aborting." >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          printf "notes<<EOF\n%s\nEOF\n" "$NOTES" >> "$GITHUB_OUTPUT"
 
       - name: Run bump script
         env:
           VERSION: ${{ steps.next.outputs.version }}
-          NOTES: ${{ inputs.notes }}
+          NOTES: ${{ steps.next.outputs.notes }}
         run: |
           B64=$(printf '%s' "${NOTES:-Maintenance updates.}" | base64 | tr -d '\n')
           node scripts/bump-wp-version.mjs "$VERSION" "$B64"
 
-      - name: Create release PR
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: release/v${{ steps.next.outputs.version }}
-          base: main
-          commit-message: |
-            chore(release): v${{ steps.next.outputs.version }}
-          title: |
-            release: v${{ steps.next.outputs.version }}
-          body: |
-            Prepares the release bump to v${{ steps.next.outputs.version }}.
-
-            - Updates `sokinpay.php` and `readme.txt`
-            - Changelog is kept newest-first
-
-            After merging this PR, the Release workflow will tag and publish.
-          labels: release
-
+      - name: Commit and push release branch
+        env:
+          VERSION: ${{ steps.next.outputs.version }}
+        run: |
+          set -euo pipefail
+          BRANCH="release/v${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git commit -am "chore(release): v${VERSION}"
+          git push origin "$BRANCH"

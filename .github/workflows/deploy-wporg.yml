@@ -23,14 +23,17 @@ jobs:
           node-version: '22.14.0'
           check-latest: true
 
-      - name: Prepare version files from release tag/body
+      - name: Verify version matches release tag
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-          RELEASE_BODY: ${{ github.event.release.body }}
         run: |
+          set -euo pipefail
           VERSION="${RELEASE_TAG#v}"
-          B64=$(printf '%s' "$RELEASE_BODY" | base64 | tr -d '\n')
-          node scripts/bump-wp-version.mjs "$VERSION" "$B64"
+          FILE_VERSION=$(grep -Eo "\*\s*Version:\s*[0-9]+\.[0-9]+\.[0-9]+" sokinpay.php | awk '{print $3}')
+          if [ "$VERSION" != "$FILE_VERSION" ]; then
+            echo "Version mismatch: tag=$VERSION, sokinpay.php=$FILE_VERSION" >&2
+            exit 1
+          fi
 
       - name: Build distributable
         run: |

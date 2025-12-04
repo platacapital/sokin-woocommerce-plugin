@@ -17,31 +17,88 @@ on:
 
 jobs:
   release:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      startsWith(github.event.head_commit.message, 'chore(release): v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      issues: write
-      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.14.0'
-          check-latest: true
+      - name: Determine version change
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Extract current version from sokinpay.php in this commit
+          NEW_VERSION=$(grep -Eo "\*\s*Version:\s*[0-9]+\.[0-9]+\.[0-9]+" sokinpay.php | awk '{print $3}')
+          if [ -z "${NEW_VERSION:-}" ]; then
+            echo "No version found in sokinpay.php; skipping." >&2
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
-      - name: Install dependencies
-        run: npm ci
+          # If there is no previous commit (e.g., first commit), treat as changed
+          if ! git rev-parse HEAD^ >/dev/null 2>&1; then
+            echo "First commit on branch; treating version ${NEW_VERSION} as changed."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
-      - name: Run semantic-release
+          # Compare with previous commit's version
+          OLD_VERSION=$(git show HEAD^:sokinpay.php | grep -Eo "\*\s*Version:\s*[0-9]+\.[0-9]+\.[0-9]+" | awk '{print $3}' || true)
+          if [ -z "${OLD_VERSION:-}" ] || [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+            echo "Version changed from '${OLD_VERSION:-none}' to '${NEW_VERSION}'."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version unchanged (${NEW_VERSION}); skipping release tagging."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create tag
+        if: steps.version.outputs.changed == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="v${VERSION}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists; skipping tag creation."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Generate release notes from readme.txt
+        if: steps.version.outputs.changed == 'true'
+        id: notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${VERSION}"
+          BODY=$(awk -v ver="$VERSION" '
+            $0 ~ "^= "ver" =" {inblock=1; next}
+            inblock && /^=/ {exit}
+            inblock {print}
+          ' readme.txt)
+          if [ -z "${BODY:-}" ]; then
+            BODY="Release v${VERSION}"
+          fi
+          printf "body<<EOF\n%s\nEOF\n" "$BODY" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: ${{ steps.notes.outputs.body }}
 

@@ -109,52 +109,119 @@ Before going live:
 
 ### Automated (recommended)
 
-1. **Write Conventional Commits**
-   - Only `feat`, `fix`, `perf`, or commits marked as BREAKING CHANGES will trigger a release.
-   - Other commit types (`chore`, `docs`, `ci`, `build`, etc.) are ignored by semantic-release.
+1. **Prepare the release branch (GitHub Action)**
+   - Go to the **Actions** tab in GitHub and run the **“Prepare Release PR”** workflow against the `main` branch.
+   - The workflow:
+     - Analyzes commits since the last `vX.Y.Z` tag using conventional commits (via `semantic-release` and `.releaserc.json`).
+     - Computes the next semantic version (major/minor/patch).
+     - Generates release notes from those commits.
+     - Runs `scripts/bump-wp-version.mjs` to update `sokinpay.php`, `readme.txt`, and all internal versioned constants/script/style handles used by WooCommerce.
+     - Commits the changes and pushes a `release/vX.Y.Z` branch with message `chore(release): vX.Y.Z`.
 
-2. **Merge to `main`**
-   - The `Release` workflow is triggered on merges that touch plugin files (`sokinpay.php`, `includes/**`, `assets/**`, `languages/**`, `readme.txt`, etc.), but the release job only runs for the `chore(release): vX.Y.Z` merge commit from the Release PR.
-   - The workflow can also be run manually from the Actions tab (`workflow_dispatch`).
+2. **Open and merge the Release PR**
+   - In GitHub, open a pull request from `release/vX.Y.Z` into `main`.
+   - Review the diff (version fields, changelog entry, etc.) and get it approved.
+   - Merge the PR into `main` using your normal process.
 
-3. **Semantic-release automation**
-   - Calculates the next version and uses `scripts/bump-wp-version.mjs` to update `sokinpay.php`, `readme.txt`, the WordPress changelog order, and all internal versioned constants/script/style handles used by WooCommerce.
-   - Commits the version bump, creates a `vX.Y.Z` git tag, and publishes a GitHub Release with generated notes and an attached zip built from `.distignore` (no `docker-entrypoint.sh`).
-   - When triggered via the **Prepare Release PR** workflow, any `notes` you provide are fed into the bump script and included in the `readme.txt` changelog entry for that version.
-   - The `Release` workflow only runs automatically when the `chore(release): vX.Y.Z` merge commit from the Release PR hits `main`, or when manually dispatched from Actions.
+3. **Tag and GitHub Release (Release workflow)**
+   - When the merge commit lands on `main`, the **“Release”** workflow runs automatically.
+   - It:
+     - Reads the `Version:` header from `sokinpay.php` and compares it to the previous commit.
+     - If the version changed, creates and pushes a `vX.Y.Z` tag pointing at the merge commit.
+     - Extracts the `= X.Y.Z =` section from `readme.txt` and uses it as the GitHub Release notes.
+     - Creates a GitHub Release named `vX.Y.Z` with those notes.
 
-4. **WordPress.org deployment**
-   - The `Deploy to WordPress.org` workflow fires when the GitHub Release is published.
-   - It rebuilds a clean `dist/` payload, reuses the release zip, and pushes the new version to the WordPress.org plugin SVN using `WPORG_USERNAME`/`WPORG_PASSWORD` secrets.
-   - Download the `sokin-woocommerce-plugin-vX.Y.Z.zip` asset from the release if you need to upload to any additional marketplaces.
+4. **Deployments driven by the GitHub Release**
+   - **Demo environment:** the **“Deploy Release Demo”** workflow (`deploy-release.yaml`) runs on GitHub `release` events and:
+     - Builds and pushes a Docker image tagged with `vX.Y.Z`.
+     - Updates the demo environment to use the new image.
+   - **WordPress.org:** the **“Deploy to WordPress.org”** workflow (`deploy-wporg.yml`) runs on published GitHub Releases and:
+     - Verifies that the `vX.Y.Z` tag matches the `Version:` in `sokinpay.php`.
+     - Builds a clean `dist/` directory using `.distignore`.
+     - Creates a `sokin-woocommerce-plugin-vX.Y.Z.zip` archive.
+     - Deploys the new version to the WordPress.org plugin SVN using `WPORG_USERNAME`/`WPORG_PASSWORD` secrets.
 
 5. **Verify**
-   - Confirm the release and tag exist, the WordPress.org listing shows the new version, and the plugin files reflect the bumped version.
+   - Confirm the tag and GitHub Release exist, the WordPress.org listing shows the new version, and the plugin files reflect the bumped version.
 
 ### Manual fallback
 
-If the automation is unavailable, you can still cut a release manually while letting the bump script keep all WordPress metadata in sync:
+If GitHub Actions are unavailable or partially failing, you can perform each step manually.
 
-1. From the project root, run the bump script with the new version and (optionally) base64‑encoded notes:
-   ```bash
-   # Without explicit notes: derives notes from git commits since the last tag, or falls back to a generic maintenance entry
-   node scripts/bump-wp-version.mjs X.Y.Z
+#### Step 1: Prepare the release in a local clone
 
-   # With explicit notes (recommended for clearer changelogs)
-   NOTES_B64=$(printf 'Short description of changes for X.Y.Z' | base64)
-   RELEASE_NOTES_B64="$NOTES_B64" node scripts/bump-wp-version.mjs X.Y.Z
-   ```
-   This updates `sokinpay.php`, `readme.txt`, the internal plugin/class/script/style versions, and prepends a `= X.Y.Z =` changelog entry built from the provided or derived notes.
-2. Review the diff, then commit and push the changes to `main` (for example: `chore(release): vX.Y.Z`).
-3. Create a GitHub Release targeting `main`, adding a new `vX.Y.Z` tag and release notes.
-4. If you need a manual zip (e.g. for marketplaces), package the plugin, mirroring `.distignore` exclusions:
+1. Ensure your local `main` is up to date:
    ```bash
-   zip -r sokin-woocommerce-plugin-vX.Y.Z.zip . \
-     -x "**/.git*" "**/.DS_Store" "local-dev/*" "tests/*" "wp-content/*" \
-        "docker-compose*" "*.log" "**/docker-entrypoint.sh" "scripts/*" \
-        "package.json" "package-lock.json" ".releaserc.json" ".distignore"
+   git checkout main
+   git pull origin main
+   npm ci
    ```
-5. Upload the archive wherever needed (for example, to a marketplace that does not consume the GitHub Release directly).
+
+2. Compute the next version and notes using the same rules as the automation:
+   ```bash
+   node scripts/compute-next-version.mjs > /tmp/next-release.json
+
+   # Inspect the result
+   cat /tmp/next-release.json
+   # {
+   #   "version": "X.Y.Z",
+   #   "notes": "…generated release notes…"
+   # }
+   ```
+
+3. Run the bump script using that version and notes:
+   ```bash
+   VERSION=$(jq -r '.version' /tmp/next-release.json)
+   NOTES=$(jq -r '.notes' /tmp/next-release.json)
+   NOTES_B64=$(printf '%s' "$NOTES" | base64 | tr -d '\n')
+
+   node scripts/bump-wp-version.mjs "$VERSION" "$NOTES_B64"
+   ```
+
+4. Create and push the release branch:
+   ```bash
+   git checkout -b "release/v$VERSION"
+   git commit -am "chore(release): v$VERSION"
+   git push origin "release/v$VERSION"
+   ```
+
+5. Open a PR from `release/vX.Y.Z` to `main` in GitHub, review, and merge.
+
+#### Step 2: Tag and create the GitHub Release manually
+
+1. After the PR is merged, tag the merge commit on `main`:
+   ```bash
+   git checkout main
+   git pull origin main
+
+   VERSION=X.Y.Z  # match the version in sokinpay.php/readme.txt
+   git tag "v$VERSION"
+   git push origin "v$VERSION"
+   ```
+
+2. In GitHub, go to **Releases**:
+   - Click **“Draft a new release”**.
+   - Select the `vX.Y.Z` tag.
+   - Use the `= X.Y.Z =` section from `readme.txt` as the release notes.
+   - Publish the release.
+
+#### Step 3: Demo and WordPress.org deployments
+
+If the tag and GitHub Release exist but the automation fails:
+
+- **Demo environment:**
+  - Manually run the **“Deploy Release Demo”** workflow from the Actions tab.
+  - Use `vX.Y.Z` as the `tag` input.
+
+- **WordPress.org:**
+  - Manually run the **“Deploy to WordPress.org”** workflow from the Actions tab for the `vX.Y.Z` Release.
+  - Alternatively, to build a zip locally that mirrors `.distignore`:
+    ```bash
+    rsync -rc --delete --exclude-from='.distignore' ./ ./dist/
+    cd dist
+    zip -r "../sokin-woocommerce-plugin-vX.Y.Z.zip" . -x '*.DS_Store'
+    ```
+  - You can then deploy that zip to WordPress.org using your own SVN client if needed.
 
 #### GitHub secrets
 
