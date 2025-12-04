@@ -121,18 +121,31 @@ async function updateReadme(version, notes) {
   contents = contents.replace(stableTagRegex, `$1${version}`);
 
   const changelogData = extractChangelog(contents);
+
+  // If an entry for this version already exists (matching the heading
+  // pattern "= <version> ="), leave the changelog body untouched.
+  const targetVersion = extractVersionNumber(version);
+  const existingHeading = `= ${targetVersion} =`;
+  if (changelogData.body.includes(existingHeading)) {
+    const updatedContents =
+      changelogData.prefix + changelogData.heading + changelogData.body;
+    await writeFile(readmePath, ensureTrailingNewline(updatedContents));
+    return;
+  }
+
   const formattedNotes = buildChangelogBody(notes);
   const entryForVersion = createChangelogEntry(version, formattedNotes);
+  const renderedTarget = renderChangelog([entryForVersion]).trimEnd();
 
-  const filteredEntries = changelogData.entries.filter(
-    (entry) => entry.version !== entryForVersion.version
-  );
-  filteredEntries.push(entryForVersion);
-  filteredEntries.sort(sortEntriesDescending);
+  // Prepend the new entry to the existing changelog body, leaving all
+  // previous entries completely untouched.
+  const existingBody = changelogData.body.replace(/^\n+/, '');
+  const newBody = existingBody
+    ? `${renderedTarget}\n\n${existingBody}`
+    : `${renderedTarget}\n`;
 
-  const rebuiltChangelog = renderChangelog(filteredEntries);
   const updatedContents =
-    changelogData.prefix + changelogData.heading + rebuiltChangelog;
+    changelogData.prefix + changelogData.heading + newBody;
 
   await writeFile(readmePath, ensureTrailingNewline(updatedContents));
 }
@@ -193,6 +206,7 @@ function extractChangelog(contents) {
       title,
       version: extractVersionNumber(title),
       body: entryBody,
+      raw: match[0],
       originalIndex: index++
     });
   }
@@ -200,6 +214,7 @@ function extractChangelog(contents) {
   return {
     prefix,
     heading,
+    body,
     entries
   };
 }
