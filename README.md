@@ -133,19 +133,28 @@ Before going live:
 
 ### Manual fallback
 
-If the automation is unavailable, follow these steps instead:
+If the automation is unavailable, you can still cut a release manually while letting the bump script keep all WordPress metadata in sync:
 
-1. Update `sokinpay.php` and `readme.txt` with the new version and changelog entry, ensuring all internal version fields (plugin header, `WOO_CUSTOM_PAYMENT` constant, class version, and script/style versions) are kept in sync.
-2. Commit and push the changes to `main`.
+1. From the project root, run the bump script with the new version and (optionally) base64‑encoded notes:
+   ```bash
+   # Without explicit notes: derives notes from git commits since the last tag, or falls back to a generic maintenance entry
+   node scripts/bump-wp-version.mjs X.Y.Z
+
+   # With explicit notes (recommended for clearer changelogs)
+   NOTES_B64=$(printf 'Short description of changes for X.Y.Z' | base64)
+   RELEASE_NOTES_B64="$NOTES_B64" node scripts/bump-wp-version.mjs X.Y.Z
+   ```
+   This updates `sokinpay.php`, `readme.txt`, the internal plugin/class/script/style versions, and prepends a `= X.Y.Z =` changelog entry built from the provided or derived notes.
+2. Review the diff, then commit and push the changes to `main` (for example: `chore(release): vX.Y.Z`).
 3. Create a GitHub Release targeting `main`, adding a new `vX.Y.Z` tag and release notes.
-4. Package the plugin manually, mirroring `.distignore` exclusions:
+4. If you need a manual zip (e.g. for marketplaces), package the plugin, mirroring `.distignore` exclusions:
    ```bash
    zip -r sokin-woocommerce-plugin-vX.Y.Z.zip . \
      -x "**/.git*" "**/.DS_Store" "local-dev/*" "tests/*" "wp-content/*" \
         "docker-compose*" "*.log" "**/docker-entrypoint.sh" "scripts/*" \
         "package.json" "package-lock.json" ".releaserc.json" ".distignore"
    ```
-5. Upload the archive to the WordPress marketplace entry and publish.
+5. Upload the archive wherever needed (for example, to a marketplace that does not consume the GitHub Release directly).
 
 #### GitHub secrets
 
