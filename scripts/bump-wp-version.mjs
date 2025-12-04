@@ -60,7 +60,7 @@ async function updatePluginVersion(version) {
   contents = contents.replace(styleVersionRegex, `$1${version}$2`);
 
   const adminScriptVersionRegex =
-    /(wp_register_script\(\s*'sokinpay_gateway_js'[\s\S]*?,\s*array\(\)\s*,\s*')[^']+('\s*,\s*array\(\s*'in_footer'\s*=>\s*true\s*\)\s*\))/;
+    /(wp_register_script\(\s*'sokinpay_gateway_js'[\s\S]*?,\s*array\([^)]*\)\s*,\s*')[^']+(')/;
   if (!adminScriptVersionRegex.test(contents)) {
     throw new Error('Unable to locate sokinpay_gateway_js version in sokinpay.php');
   }

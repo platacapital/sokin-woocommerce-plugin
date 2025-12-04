@@ -4,13 +4,12 @@
  * Plugin Name: Sokin Pay
  * Plugin URI:
  * Description: This plugin seamlessly integrates with your WooCommerce store, providing a secure and efficient way to process payments. Enable a variety of secure payment options, including credit cards and pay by bank.
- * Version: 1.1.2
+ * Version: 1.1.3
  * Author: Sokin
  * Author URI:
  * Requires at least: 6.5
  * Tested up to: 6.9
  * Requires PHP: 7.4
- * Stable tag: sokinpay
  * License: GPLv2 or later
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: sokin-pay
@@ -27,7 +26,7 @@ if (!defined('WPINC')) {
 /**
  * Define plugin's Version constant
  */
-define('WOO_CUSTOM_PAYMENT', '1.1.2');
+define('WOO_CUSTOM_PAYMENT', '1.1.3');
 
 /**
  * The code that runs during plugin activation
@@ -41,7 +40,7 @@ function activate_woo_cpay() {
  * Register the stylesheet
  */
 function register_sokinpay_gateway_styles() {
-	wp_register_style('sokinpay_gateway_style', plugin_dir_url(__FILE__) . 'assets/css/style.css', array(), '1.1.2', 'all');
+	wp_register_style('sokinpay_gateway_style', plugin_dir_url(__FILE__) . 'assets/css/style.css', array(), '1.1.3', 'all');
 	wp_enqueue_style('sokinpay_gateway_style');
 }
 
@@ -49,10 +48,28 @@ function register_sokinpay_gateway_styles() {
 add_action('wp_enqueue_scripts', 'register_sokinpay_gateway_styles');
 
 /**
- * Register custom javascript file for Admin panel pages use only
+ * Register custom javascript file for Admin order screens.
  */
 function register_sokinpay_gateway_scripts($hook) {
-	wp_register_script('sokinpay_gateway_js', plugin_dir_url(__FILE__) . 'includes/js/woo_cpay_js.js', array(), '1.1.2', array('in_footer' => true));
+	// Only load on post edit screens for WooCommerce orders.
+	if ('post.php' !== $hook && 'post-new.php' !== $hook) {
+		return;
+	}
+
+	if (function_exists('get_current_screen')) {
+		$screen = get_current_screen();
+		if (!$screen || 'shop_order' !== $screen->post_type) {
+			return;
+		}
+	}
+
+	wp_register_script(
+		'sokinpay_gateway_js',
+		plugin_dir_url(__FILE__) . 'includes/js/woo_cpay_js.js',
+		array('jquery'),
+		'1.1.3',
+		true
+	);
 	wp_enqueue_script('sokinpay_gateway_js');
 }
 

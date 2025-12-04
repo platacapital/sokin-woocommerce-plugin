@@ -1,11 +1,11 @@
 === Sokin Pay ===
 Contributors: Sokin
-Version: 1.1.2
-Tags: sokinpay
+Version: 1.1.3
+Tags: woocommerce, payments, payment gateway, credit card, ecommerce
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,12 +15,20 @@ Easily accept payments on your WordPress site via Sokin Pay payment gateway.
 This plugin seamlessly integrates with your WooCommerce store, providing a secure and efficient way to process payments. Enable a variety of secure payment options, including credit cards and pay by bank.
 Register your business account at [sokin.com](https://sokin.com/business/business-account-signup/).
 
+Sokin is a trading name of Plata Capital Ltd. More information about Sokin’s services and how to sign up can be found on [sokin.com](https://sokin.com).
+
 #### Features
 - Easy installation and setup
 - Secure transactions
 - Support for multiple payment methods
 - Real-time transaction updates
 - Comprehensive customer support
+
+#### Data & privacy
+
+This plugin connects your WooCommerce store to Sokin’s ecommerce payment services. When a customer checks out using Sokin Pay, the plugin sends order and customer information to Sokin for the sole purpose of processing payments and refunds. This includes details such as the customer’s name, email address, billing address (and, when different, shipping address), order total, and currency.
+
+Sokin is a trading name of Plata Capital Ltd. For full details on how Sokin is regulated and how data is handled, please refer to the region-specific Terms & Conditions and related policies available on [sokin.com](https://sokin.com) and the [Sokin Legal](https://sokin.com/legal) page.
 
 #### Configuration
 
@@ -59,6 +67,12 @@ Is WooCommerce plugin mandatory for Sokin Pay plugin?
 Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and data.
 
 == Changelog ==
+
+= 1.1.3 =
+* Released: 2025-12-04
+* fix: restrict script registration to WooCommerce order screens
+* chore: update license to GNU GPL v2 and enhance documentation
+* refactor: remove unused parameters from order payload
 
 = 1.1.2 =
 * Released: 2025-12-04
