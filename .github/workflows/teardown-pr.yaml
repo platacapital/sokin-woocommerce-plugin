@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [closed]
 
+# Default token is unused by SSH-only steps; keep scopes minimal for defense in depth.
+permissions:
+  contents: read
+
 jobs:
   teardown:
     runs-on: ubuntu-latest
