@@ -1,13 +1,13 @@
 // jQuery Function calls on ready state
 jQuery(function ($) {
-	/* 
+	/*
 		Make Title and Description fields non-tabbable in the Sokin Pay form of the Payments tab on WooCommerce->Settings page
 	*/
 	$('#woocommerce_sokinpay_gateway_title').attr('tabindex', '-1');
 	$('#woocommerce_sokinpay_gateway_description').attr('tabindex', '-1');
 
 	$(".wc-payment-gateway-method-name").remove();
-	
+
 	// Set disclaimer text for Refunding the money on Edit Order page (Admin Panel)
 	$('.button.refund-items').click(function () {
 		$('table.wc-order-totals tbody tr:nth-child(5) td.label')
@@ -30,7 +30,7 @@ jQuery(function ($) {
 	});
 
 	// Apply border color:red if Reason field is empty and set default color:#2c3338 if it has value
-	$('#refund_reason').on('keyup', function () { 
+	$('#refund_reason').on('keyup', function () {
 		let refundReason = $('#refund_reason').val();
 		if (refundReason === null || refundReason === undefined || refundReason === '') {
 			$('#refund_reason').css('border-color', 'red');

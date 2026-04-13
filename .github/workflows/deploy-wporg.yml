@@ -15,7 +15,7 @@ jobs:
     if: ${{ github.event.release.prerelease == false }}
     runs-on: ubuntu-latest
     env:
-      PLUGIN_SLUG: sokin-woocommerce-plugin
+      PLUGIN_SLUG: sokin-pay
     steps:
       - name: Checkout
         uses: actions/checkout@v4

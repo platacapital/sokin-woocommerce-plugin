@@ -94,7 +94,7 @@ fi
 
 # --- 7. Configure Options ---
 # With plugins active, we can now fetch metadata and set final options.
-PLUGIN_VERSION=$(wp eval 'echo get_plugin_data(WP_PLUGIN_DIR . "/sokin-pay/sokinpay.php")["Version"];' 2>/dev/null || echo "Unknown")
+PLUGIN_VERSION=$(wp eval 'echo get_plugin_data(WP_PLUGIN_DIR . "/sokin-pay/sokin-pay.php")["Version"];' 2>/dev/null || echo "Unknown")
 
 # Dynamically set final site title based on VIRTUAL_HOST.
 if [[ "$VIRTUAL_HOST" == *pr-* ]]; then
@@ -107,7 +107,7 @@ elif [[ "$VIRTUAL_HOST" == *demo.* ]]; then
     wp option update blogname "$SITE_TITLE"
 fi
 
-SETTINGS_JSON="{\"enabled\": \"yes\", \"title\": \"Pay by card\", \"description\": \"Powered by Sokin\", \"woo_cpay_redirect_url\": \"${SOKIN_REDIRECT_URL:-https://portal.sandbox.sokin.com/sokinpay/customerPay}\", \"woo_cpay_x_api_key\": \"${SOKIN_X_API_KEY:-dummy_api_key}\", \"woo_cpay_api_url\": \"${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}\"}"
+SETTINGS_JSON="{\"enabled\": \"yes\", \"title\": \"Pay by card\", \"description\": \"Powered by Sokin\", \"platasokin_redirect_url\": \"${SOKIN_REDIRECT_URL:-https://portal.sandbox.sokin.com/sokinpay/customerPay}\", \"platasokin_x_api_key\": \"${SOKIN_X_API_KEY:-dummy_api_key}\", \"platasokin_api_url\": \"${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}\"}"
 wp option update woocommerce_sokinpay_gateway_settings "$SETTINGS_JSON" --format=json
 
 # Enable Cash on Delivery to test multiple gateway scenarios (radio buttons in checkout)

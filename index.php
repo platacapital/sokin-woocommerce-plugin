@@ -1,2 +1,10 @@
 <?php
-// Silence is golden.
+/**
+ * Silence is golden.
+ *
+ * @package Platasokin
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}

@@ -1,5 +1,5 @@
 === Sokin Pay ===
-Contributors: Sokin
+Contributors: platasokin
 Version: 1.1.3
 Tags: woocommerce, payments, payment gateway, credit card, ecommerce
 Requires at least: 6.5

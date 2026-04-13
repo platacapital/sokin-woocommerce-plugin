@@ -31,77 +31,26 @@ if (!releaseNotes) {
 
 await updatePluginVersion(newVersion);
 await updateReadme(newVersion, releaseNotes);
-await updateCoreClassVersion(newVersion);
-await updateWooFunctionsVersion(newVersion);
 
 console.log(`Prepared WordPress assets for v${newVersion}`);
 
 async function updatePluginVersion(version) {
-  const pluginFile = path.join(projectRoot, 'sokinpay.php');
+  const pluginFile = path.join(projectRoot, 'sokin-pay.php');
   let contents = await readFile(pluginFile, 'utf8');
 
   const headerRegex = /(\*\s*Version:\s*)([^\r\n]+)/;
   if (!headerRegex.test(contents)) {
-    throw new Error('Unable to locate plugin header Version field in sokinpay.php');
+    throw new Error('Unable to locate plugin header Version field in sokin-pay.php');
   }
   contents = contents.replace(headerRegex, `$1${version}`);
 
-  const constantRegex = /(define\('WOO_CUSTOM_PAYMENT',\s*')[^']+('\);)/;
+  const constantRegex = /(define\(\s*'PLATASOKIN_VERSION',\s*')[^']+('\s*\)\s*;)/;
   if (!constantRegex.test(contents)) {
-    throw new Error('Unable to locate WOO_CUSTOM_PAYMENT constant in sokinpay.php');
+    throw new Error('Unable to locate PLATASOKIN_VERSION constant in sokin-pay.php');
   }
   contents = contents.replace(constantRegex, `$1${version}$2`);
 
-  const styleVersionRegex =
-    /(wp_register_style\(\s*'sokinpay_gateway_style'[\s\S]*?,\s*array\(\)\s*,\s*')[^']+('\s*,\s*'all'\s*\))/;
-  if (!styleVersionRegex.test(contents)) {
-    throw new Error('Unable to locate sokinpay_gateway_style version in sokinpay.php');
-  }
-  contents = contents.replace(styleVersionRegex, `$1${version}$2`);
-
-  const adminScriptVersionRegex =
-    /(wp_register_script\(\s*'sokinpay_gateway_js'[\s\S]*?,\s*array\([^)]*\)\s*,\s*')[^']+(')/;
-  if (!adminScriptVersionRegex.test(contents)) {
-    throw new Error('Unable to locate sokinpay_gateway_js version in sokinpay.php');
-  }
-  contents = contents.replace(adminScriptVersionRegex, `$1${version}$2`);
-
   await writeFile(pluginFile, contents);
-}
-
-async function updateCoreClassVersion(version) {
-  const coreClassPath = path.join(projectRoot, 'includes', 'class_woo_cpay.php');
-  let contents = await readFile(coreClassPath, 'utf8');
-
-  const fallbackRegex = /(this->version\s*=\s*')[^']+(';)/;
-  if (!fallbackRegex.test(contents)) {
-    throw new Error(
-      'Unable to locate fallback version assignment in class_woo_cpay.php'
-    );
-  }
-  contents = contents.replace(fallbackRegex, `$1${version}$2`);
-
-  await writeFile(coreClassPath, contents);
-}
-
-async function updateWooFunctionsVersion(version) {
-  const wooFunctionsPath = path.join(
-    projectRoot,
-    'includes',
-    'class_woo_cpay_woo_functions.php'
-  );
-  let contents = await readFile(wooFunctionsPath, 'utf8');
-
-  const scriptVersionRegex =
-    /(wp_register_script\(\s*'woocommerce_woo_cpay_js'[\s\S]*?,\s*array\('jquery'\)\s*,\s*')[^']+('\s*,\s*true\s*\))/;
-  if (!scriptVersionRegex.test(contents)) {
-    throw new Error(
-      'Unable to locate woocommerce_woo_cpay_js script version in class_woo_cpay_woo_functions.php'
-    );
-  }
-  contents = contents.replace(scriptVersionRegex, `$1${version}$2`);
-
-  await writeFile(wooFunctionsPath, contents);
 }
 
 async function updateReadme(version, notes) {
@@ -325,4 +274,3 @@ function decodeReleaseNotes(value) {
     return value;
   }
 }
-

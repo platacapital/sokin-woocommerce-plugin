@@ -44,7 +44,7 @@ jobs:
             TAG=$(git describe --tags --abbrev=0)
             CUR=${TAG#v}
           else
-            CUR=$(grep -Eo "\*\s*Version:\s*[^\r\n]+" sokinpay.php | awk '{print $3}')
+            CUR=$(grep -Eo "\*\s*Version:\s*[^\r\n]+" sokin-pay.php | awk '{print $3}')
           fi
           echo "current=$CUR" >> "$GITHUB_OUTPUT"
 
@@ -88,7 +88,7 @@ jobs:
           body: |
             Prepares the release bump to v${{ steps.next.outputs.version }}.
 
-            - Updates `sokinpay.php` and `readme.txt`
+            - Updates `sokin-pay.php` and `readme.txt`
             - Changelog is kept newest-first
 
             After merging this PR, the Release workflow will tag and publish.

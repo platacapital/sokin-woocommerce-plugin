@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'sokinpay.php'
+      - 'sokin-pay.php'
       - 'includes/**'
       - 'assets/**'
       - 'languages/**'
