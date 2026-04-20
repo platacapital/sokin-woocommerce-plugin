@@ -42,7 +42,7 @@ A root `docker-compose.yml` spins up WordPress, MariaDB, and Nginx. TLS uses `lo
     git clone https://github.com/platacapital/sokin-woocommerce-plugin.git
     cd sokin-woocommerce-plugin
     ```
-2.  **(Optional) Update Passwords:** Open `docker-compose.yml` in the repository root and change the default passwords for `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, and `ADMIN_PASS` to something more secure. You can override values with a `.env` file in the same directory; Docker Compose loads it automatically.
+2.  **(Optional) Update Passwords:** Open `docker-compose.yml` in the repository root and change the default passwords for `MYSQL_ROOT_PASSWORD`, `WORDPRESS_DB_PASSWORD`, and `ADMIN_PASS` to something more secure. You can override values with a `.env` file in the same directory; Docker Compose loads it automatically.
 
 3.  **Generate Local SSL Certificate:** This setup requires an SSL certificate for `localhost` placed in `local-dev/certs/`. These certificates are **not committed** to the repository and must be generated locally.
 
