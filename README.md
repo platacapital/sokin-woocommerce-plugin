@@ -20,20 +20,16 @@ This plugin enables WooCommerce stores to accept payments through Sokin Pay, pro
 1. Clone this repository into your existing WordPress development environment's plugins directory:
    ```bash
    cd /path/to/wp-content/plugins
-   git clone https://github.com/your-repo/sokin-woocommerce-plugin.git
+   git clone https://github.com/platacapital/sokin-woocommerce-plugin.git
    ```
 
-2. Install dependencies (if using Composer):
-   ```bash
-   cd sokin-woocommerce-plugin
-   composer install
-   ```
+2. Activate the plugin through the WordPress admin panel.
 
-3. Activate the plugin through the WordPress admin panel.
+   This plugin ships without Composer or npm runtime dependencies. If you are changing release automation (semantic-release), install tooling from the repository root with `npm ci`.
 
 ### Option 2: Using Docker Compose (Recommended for Isolated Testing)
 
-This repository includes a setup in the `local-dev/` directory for quickly spinning up a local WordPress + WooCommerce environment using Docker Compose. This method uses a local Nginx reverse proxy to provide HTTPS access.
+A root `docker-compose.yml` spins up WordPress, MariaDB, and Nginx. TLS uses `local-dev/nginx.conf` and certificate files you place in `local-dev/certs/` (those cert files are not committed).
 
 **Prerequisites:**
 - Docker and Docker Compose installed.
@@ -43,10 +39,10 @@ This repository includes a setup in the `local-dev/` directory for quickly spinn
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/your-repo/sokin-woocommerce-plugin.git
+    git clone https://github.com/platacapital/sokin-woocommerce-plugin.git
     cd sokin-woocommerce-plugin
     ```
-2.  **(Optional) Update Passwords:** Open `local-dev/docker-compose.yml` and change the default passwords for `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, and `ADMIN_PASS` to something more secure.
+2.  **(Optional) Update Passwords:** Open `docker-compose.yml` in the repository root and change the default passwords for `MYSQL_ROOT_PASSWORD`, `WORDPRESS_DB_PASSWORD`, and `ADMIN_PASS` to something more secure. You can override values with a `.env` file in the same directory; Docker Compose loads it automatically.
 
 3.  **Generate Local SSL Certificate:** This setup requires an SSL certificate for `localhost` placed in `local-dev/certs/`. These certificates are **not committed** to the repository and must be generated locally.
 
@@ -80,11 +76,13 @@ This repository includes a setup in the `local-dev/` directory for quickly spinn
     *   `--build`: Ensures the image is built with the latest changes.
     *   `-d`: Runs the containers in the background.
 5.  **Access the Site:**
-    *   Open your browser and navigate to `https://localhost:8443`.
+    *   Open your browser and navigate to `https://localhost:8443` (Nginx terminates TLS on port 8443).
+    *   WordPress is also exposed directly on `http://localhost:8080` (plain HTTP, no Nginx); prefer `https://localhost:8443` for a setup closer to production.
     *   *(If using `openssl`, bypass the browser security warning).*
     *   WordPress Admin: `https://localhost:8443/wp-admin/`
     *   Admin Username: `testadmin` (or as set in `docker-compose.yml`)
     *   Admin Password: `testpass` (or as set in `docker-compose.yml`)
+    *   Compose bind-mounts the repository into the container at `wp-content/plugins/sokin-pay` (the WordPress.org plugin slug), so edits on the host are reflected immediately.
 6.  **Stopping the Environment:** From the project **root** directory:
     ```bash
     docker-compose down
@@ -99,13 +97,18 @@ This repository includes a setup in the `local-dev/` directory for quickly spinn
 3. Enter your API credentials from your [Sokin Business Account](https://sokin.com/business/business-account-signup/)
 ## Testing
 
+There is no PHPUnit suite checked into this repository yet; validation is manual.
+
 Before going live:
-- Test the integration using Sokin's sandbox environment
-- Verify payment flows with test cards
-- Check webhook handling
-- Ensure proper error handling
+
+- Run through checkout in a **sandbox** Sokin environment (see `SOKIN_API_URL` and related variables in `docker-compose.yml`; override with a root `.env` file if needed).
+- Verify payment flows with Sokin's test cards and credentials from the [Sokin API documentation](https://api-docs.sokin.com).
+- In **WooCommerce > Settings > Advanced > Webhooks** (or your gateway's documented callback URL), confirm webhooks reach your store and orders update as expected.
+- Exercise failure paths (declines, timeouts, user cancel) and confirm the customer sees a clear message.
 
 ## Release Process
+
+Details below are primarily for **maintainers** who cut releases; day-to-day contributions do not require this workflow.
 
 ### Automated (recommended)
 
@@ -135,7 +138,7 @@ Before going live:
 
 If the automation is unavailable, you can still cut a release manually while letting the bump script keep all WordPress metadata in sync:
 
-1. From the project root, run the bump script with the new version and (optionally) base64‑encoded notes:
+1. From the project root, run the bump script with the new version and (optionally) base64-encoded notes:
    ```bash
    # Without explicit notes: derives notes from git commits since the last tag, or falls back to a generic maintenance entry
    node scripts/bump-wp-version.mjs X.Y.Z

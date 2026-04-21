@@ -47,19 +47,23 @@ There are several ways you can contribute to this project:
 ### Setting Up Your Development Environment
 
 1. **Prerequisites**:
-   - PHP 7.4 or higher
-   - Latest version of WooCommerce
-   - Composer (for dependencies)
+   - PHP 7.4 or higher (match the versions noted in `README.md`)
+   - WordPress and WooCommerce compatible with the plugin
+   - Docker and Docker Compose if you use the bundled local environment
 
 2. **Installation**:
-   ```
-   git clone https://github.com/platacapital/sokin-magento-extension
-   cd your-repo
-   composer install
+   ```bash
+   git clone https://github.com/platacapital/sokin-woocommerce-plugin.git
+   cd sokin-woocommerce-plugin
    ```
 
-3. **Testing Locally**:
-   - For WooCommerce: Install in a local WordPress environment
+   For an isolated stack, follow **Option 2: Using Docker Compose** in `README.md`. For an existing WordPress tree, follow **Option 1: Manual Installation** there.
+
+3. **Optional tooling**:
+   - Node.js is only needed if you change semantic-release or other Node-based automation (`npm ci` from the repository root).
+
+4. **Testing locally**:
+   - Use sandbox credentials and the checklist in the **Testing** section of `README.md`.
 
 ### Questions?
 
