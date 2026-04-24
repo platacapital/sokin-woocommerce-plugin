@@ -28,6 +28,13 @@ services:
       SOKIN_X_API_KEY: ${SOKIN_X_API_KEY:-dummy_api_key}
       SOKIN_API_URL: ${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}
 
+      # Local dev bind-mounts the host checkout into the container at
+      # wp-content/plugins/sokin-pay. The release-tree normalization step in
+      # tests/docker-entrypoint.sh would otherwise rm -rf dev files (.git,
+      # docker-compose.yml, package.json, etc.) directly from the host repo.
+      # Keep this disabled here; the deploy image enables it explicitly.
+      SOKIN_NORMALIZE_PLUGIN_TREE: "0"
+
       # WordPress URL Configuration
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_HOME',    '${VIRTUAL_HOST:-https://localhost:8443}');
