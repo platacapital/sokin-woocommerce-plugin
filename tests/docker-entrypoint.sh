@@ -66,26 +66,40 @@ if ! wp plugin is-active sokin-pay; then
 fi
 
 # --- 6. Normalize plugin tree to match release ZIP ---
-PLUGIN_DIR="/var/www/html/wp-content/plugins/sokin-pay"
+# This step is destructive: it deletes development-only files from the plugin
+# directory so the running site mirrors what ships in the release archive.
+# When the host repository is bind-mounted into the container (as in the
+# default local docker-compose.yml), running this on the mount would delete
+# files from the developer's checkout (including .git, docker-compose.yml,
+# package.json, etc.). The default is therefore to SKIP this step; opt in
+# explicitly via SOKIN_NORMALIZE_PLUGIN_TREE=1 in environments that ship a
+# self-contained image (e.g. the deploy/release pipeline) and where the
+# plugin directory is NOT a host bind mount.
+if [ "${SOKIN_NORMALIZE_PLUGIN_TREE:-0}" = "1" ]; then
+    PLUGIN_DIR="/var/www/html/wp-content/plugins/sokin-pay"
+    echo "Normalizing plugin tree to match release ZIP at $PLUGIN_DIR..."
 
-# Remove development-only directories and files that are excluded from the release archive
-rm -rf \
-  "$PLUGIN_DIR/local-dev" \
-  "$PLUGIN_DIR/tests" \
-  "$PLUGIN_DIR/wp-content" \
-  "$PLUGIN_DIR/scripts" \
-  "$PLUGIN_DIR/.github"
+    # Remove development-only directories and files that are excluded from the release archive
+    rm -rf \
+      "$PLUGIN_DIR/local-dev" \
+      "$PLUGIN_DIR/tests" \
+      "$PLUGIN_DIR/wp-content" \
+      "$PLUGIN_DIR/scripts" \
+      "$PLUGIN_DIR/.github"
 
-rm -f \
-  "$PLUGIN_DIR"/docker-compose* \
-  "$PLUGIN_DIR"/*.log \
-  "$PLUGIN_DIR"/package.json \
-  "$PLUGIN_DIR"/package-lock.json \
-  "$PLUGIN_DIR"/.releaserc.json \
-  "$PLUGIN_DIR"/.distignore
+    rm -f \
+      "$PLUGIN_DIR"/docker-compose* \
+      "$PLUGIN_DIR"/*.log \
+      "$PLUGIN_DIR"/package.json \
+      "$PLUGIN_DIR"/package-lock.json \
+      "$PLUGIN_DIR"/.releaserc.json \
+      "$PLUGIN_DIR"/.distignore
 
-# Clean common hidden cruft (matches README packaging excludes for .git* and .DS_Store)
-find "$PLUGIN_DIR" \( -name '.git*' -o -name '.DS_Store' \) -prune -exec rm -rf {} + 2>/dev/null || true
+    # Clean common hidden cruft (matches README packaging excludes for .git* and .DS_Store)
+    find "$PLUGIN_DIR" \( -name '.git*' -o -name '.DS_Store' \) -prune -exec rm -rf {} + 2>/dev/null || true
+else
+    echo "Skipping release-tree normalization (SOKIN_NORMALIZE_PLUGIN_TREE!=1); preserving plugin directory as-is."
+fi
 
 # Install & activate Plugin Check (PCP) for local/plugin CI analysis
 if ! wp plugin is-installed plugin-check; then

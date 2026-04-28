@@ -14,6 +14,10 @@ services:
       SOKIN_REDIRECT_URL: ${SOKIN_REDIRECT_URL}
       SOKIN_X_API_KEY: ${SOKIN_X_API_KEY}
       SOKIN_API_URL: ${SOKIN_API_URL}
+      # The deploy image bakes plugin files in; trimming dev-only files in the
+      # image is safe and matches the release ZIP layout. Local docker-compose
+      # bind-mounts the host repo and must NOT enable this.
+      SOKIN_NORMALIZE_PLUGIN_TREE: "1"
     depends_on:
       - db
     restart: unless-stopped
