@@ -144,3 +144,6 @@ wp-config.php
 *.swp
 *.swo
 *.swn
+
+# Dependency directories
+node_modules/
