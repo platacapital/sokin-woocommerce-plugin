@@ -66,6 +66,8 @@ if ! wp plugin is-active sokin-pay; then
 fi
 
 # --- 6. Normalize plugin tree to match release ZIP ---
+PLUGIN_DIR="/var/www/html/wp-content/plugins/sokin-pay"
+
 # This step is destructive: it deletes development-only files from the plugin
 # directory so the running site mirrors what ships in the release archive.
 # When the host repository is bind-mounted into the container (as in the
@@ -76,7 +78,6 @@ fi
 # self-contained image (e.g. the deploy/release pipeline) and where the
 # plugin directory is NOT a host bind mount.
 if [ "${SOKIN_NORMALIZE_PLUGIN_TREE:-0}" = "1" ]; then
-    PLUGIN_DIR="/var/www/html/wp-content/plugins/sokin-pay"
     echo "Normalizing plugin tree to match release ZIP at $PLUGIN_DIR..."
 
     # Remove development-only directories and files that are excluded from the release archive
@@ -101,9 +102,28 @@ else
     echo "Skipping release-tree normalization (SOKIN_NORMALIZE_PLUGIN_TREE!=1); preserving plugin directory as-is."
 fi
 
+# Remove legacy files from pre-sokin-pay builds so Plugin Check scans only the
+# current plugin tree in reused dev/test environments.
+LEGACY_PLUGIN_FILES=(
+    "$PLUGIN_DIR/includes/class_woo_cpay_loader.php"
+    "$PLUGIN_DIR/includes/class_woo_cpay_woo_functions.php"
+)
+
+for legacy_plugin_file in "${LEGACY_PLUGIN_FILES[@]}"; do
+    if [ -f "$legacy_plugin_file" ]; then
+        echo "Removing legacy plugin file: $legacy_plugin_file"
+        rm -f -- "$legacy_plugin_file"
+    fi
+done
+
 # Install & activate Plugin Check (PCP) for local/plugin CI analysis
-if ! wp plugin is-installed plugin-check; then
-    wp plugin install plugin-check --activate
+PLUGIN_CHECK_SLUG="plugin-check"
+if ! wp plugin is-installed "$PLUGIN_CHECK_SLUG"; then
+    wp plugin install "$PLUGIN_CHECK_SLUG"
+fi
+
+if ! wp plugin is-active "$PLUGIN_CHECK_SLUG"; then
+    wp plugin activate "$PLUGIN_CHECK_SLUG"
 fi
 
 # --- 7. Configure Options ---
