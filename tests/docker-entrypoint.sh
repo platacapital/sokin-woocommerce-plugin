@@ -102,8 +102,13 @@ else
 fi
 
 # Install & activate Plugin Check (PCP) for local/plugin CI analysis
-if ! wp plugin is-installed plugin-check; then
-    wp plugin install plugin-check --activate
+PLUGIN_CHECK_SLUG="plugin-check"
+if ! wp plugin is-installed "$PLUGIN_CHECK_SLUG"; then
+    wp plugin install "$PLUGIN_CHECK_SLUG"
+fi
+
+if ! wp plugin is-active "$PLUGIN_CHECK_SLUG"; then
+    wp plugin activate "$PLUGIN_CHECK_SLUG"
 fi
 
 # --- 7. Configure Options ---
