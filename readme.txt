@@ -1,11 +1,11 @@
 === Sokin Pay ===
 Contributors: platasokin
-Version: 1.1.3
+Version: 1.1.4
 Tags: woocommerce, payments, payment gateway, credit card, ecommerce
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -76,6 +76,11 @@ Is WooCommerce plugin mandatory for Sokin Pay plugin?
 Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and data.
 
 == Changelog ==
+
+= 1.1.4 =
+* Released: 2026-05-04
+* Routine maintenance update with WordPress.org plugin directory compliance improvements. No action required for most merchants; legacy gateway settings are migrated automatically on update.
+* Heads-up for developers customizing the checkout: the credit card form extension hooks have been renamed from `woocommerce_credit_card_form_start` / `woocommerce_credit_card_form_end` to `platasokin_credit_card_form_start` / `platasokin_credit_card_form_end`. Update any custom integrations to the new hook names.
 
 = 1.1.3 =
 * Released: 2025-12-04

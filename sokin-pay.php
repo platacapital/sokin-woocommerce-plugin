@@ -3,7 +3,7 @@
  * Plugin Name: Sokin Pay
  * Plugin URI:
  * Description: This plugin seamlessly integrates with your WooCommerce store, providing a secure and efficient way to process payments. Enable a variety of secure payment options, including credit cards and pay by bank.
- * Version: 1.1.3
+ * Version: 1.1.4
  * Author: Sokin
  * Author URI:
  * Requires at least: 6.5
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'PLATASOKIN_VERSION', '1.1.3' );
+define( 'PLATASOKIN_VERSION', '1.1.4' );
 
 /**
  * Plugin activation callback.
