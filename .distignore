@@ -1,18 +1,35 @@
+# Files and directories excluded from the WordPress.org distribution.
+# Consumed by both rsync (deploy-wporg.yml build step) and the 10up
+# action-wordpress-plugin-deploy step. Anything not in this list ends up
+# in the published zip and on plugins.svn.wordpress.org.
+
 # Version control
 .git
 .github/
 .gitignore
 .gitattributes
 
-# Local OS files
+# Local OS / editor metadata
 .DS_Store
+.editorconfig
+.vscode/
+.idea/
 
 # Tooling and automation
+.distignore
+.releaserc.json
 package.json
 package-lock.json
-.releaserc.json
+pnpm-lock.yaml
 scripts/
 autom.plan.md
+
+# Repository documentation that is not the WordPress.org readme
+CONTRIBUTING.md
+README.md
+
+# Build output (prevents rsync self-copy when dist/ is the destination)
+dist/
 
 # Development assets
 node_modules/
@@ -22,4 +39,3 @@ wp-content/
 docker-compose*
 *.log
 **/docker-entrypoint.sh
-
