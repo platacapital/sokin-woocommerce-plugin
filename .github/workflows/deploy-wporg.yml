@@ -4,6 +4,12 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to deploy (e.g. v1.1.4). Must be an existing GitHub Release.'
+        required: true
+        type: string
 
 # Least privilege for the default GITHUB_TOKEN (CodeQL actions/missing-workflow-permissions).
 # contents:write is required to upload the zip to the GitHub Release.
@@ -12,14 +18,39 @@ permissions:
 
 jobs:
   deploy:
-    if: ${{ github.event.release.prerelease == false }}
+    # Skip prereleases when triggered by a release event, but always run on manual dispatch.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false }}
     runs-on: ubuntu-latest
     env:
       PLUGIN_SLUG: sokin-pay
     steps:
+      - name: Resolve release tag and body
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TAG: ${{ inputs.tag }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          EVENT_BODY: ${{ github.event.release.body }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="$INPUT_TAG"
+            BODY=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body)
+          else
+            TAG="$EVENT_TAG"
+            BODY="$EVENT_BODY"
+          fi
+          {
+            echo "tag=$TAG"
+            echo "body<<__BODY_EOF__"
+            printf '%s\n' "$BODY"
+            echo "__BODY_EOF__"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: ${{ steps.release.outputs.tag }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -30,8 +61,8 @@ jobs:
 
       - name: Prepare version files from release tag/body
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-          RELEASE_BODY: ${{ github.event.release.body }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_BODY: ${{ steps.release.outputs.body }}
         run: |
           VERSION="${RELEASE_TAG#v}"
           B64=$(printf '%s' "$RELEASE_BODY" | base64 | tr -d '\n')
@@ -43,21 +74,18 @@ jobs:
 
       - name: Create release archive
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
           cd dist
           zip -r "../${PLUGIN_SLUG}-${RELEASE_TAG}.zip" . -x '*.DS_Store'
           echo "ARCHIVE_NAME=${PLUGIN_SLUG}-${RELEASE_TAG}.zip" >> "$GITHUB_ENV"
 
       - name: Upload archive to GitHub release
-        uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ github.workspace }}/${{ env.ARCHIVE_NAME }}
-          asset_name: ${{ env.ARCHIVE_NAME }}
-          asset_content_type: application/zip
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          gh release upload "$RELEASE_TAG" "$ARCHIVE_NAME" --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Deploy to WordPress.org
         uses: 10up/action-wordpress-plugin-deploy@v2
@@ -67,4 +95,3 @@ jobs:
         env:
           SVN_USERNAME: ${{ secrets.WPORG_USERNAME }}
           SVN_PASSWORD: ${{ secrets.WPORG_PASSWORD }}
-
