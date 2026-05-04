@@ -365,9 +365,9 @@ function platasokin_init_gateway_class() {
 		public function payment_fields() {
 			echo '<p style="margin:0">' . esc_attr( $this->description ) . '</p>';
 
-			do_action( 'woocommerce_credit_card_form_start', $this->id );
+			do_action( 'platasokin_credit_card_form_start', $this->id );
 
-			do_action( 'woocommerce_credit_card_form_end', $this->id );
+			do_action( 'platasokin_credit_card_form_end', $this->id );
 
 			echo '<div class="clear"></div></fieldset>';
 		}

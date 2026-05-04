@@ -95,6 +95,18 @@ A root `docker-compose.yml` spins up WordPress, MariaDB, and Nginx. TLS uses `lo
 1. Go to WooCommerce > Settings > Payments
 2. Enable and configure Sokin Pay
 3. Enter your API credentials from your [Sokin Business Account](https://sokin.com/business/business-account-signup/)
+
+## Developer Hooks
+
+Sokin Pay exposes checkout field extension points through plugin-prefixed hooks:
+
+- `platasokin_credit_card_form_start`
+- `platasokin_credit_card_form_end`
+
+If your integration previously used `woocommerce_credit_card_form_start` or
+`woocommerce_credit_card_form_end` for Sokin Pay checkout customizations, update it
+to the `platasokin_*` hook names above.
+
 ## Testing
 
 There is no PHPUnit suite checked into this repository yet; validation is manual.

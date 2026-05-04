@@ -50,6 +50,15 @@ Sokin is a trading name of Plata Capital Ltd. For full details on how Sokin is r
    - View transaction details under WooCommerce > Orders.
    - Process refunds and handle disputes directly from your WooCommerce dashboard.
 
+#### Developer hooks
+
+Sokin Pay exposes checkout field extension points through plugin-prefixed hooks:
+
+* `platasokin_credit_card_form_start`
+* `platasokin_credit_card_form_end`
+
+If your integration previously used `woocommerce_credit_card_form_start` or `woocommerce_credit_card_form_end` for Sokin Pay checkout customizations, update it to the `platasokin_*` hook names above.
+
 #### Support
 For any issues or questions, please contact our support team at [support@sokin.com](mailto:support@sokin.com).
 
