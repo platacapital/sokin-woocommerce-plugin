@@ -2,7 +2,9 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Prints the WordPress.org changelog body for a given version on stdout.
+// Prints the merchant-facing release notes for a given version on stdout,
+// extracted from the matching changelog entry in readme.txt with the
+// `* Released: <date>` metadata line stripped.
 // Used as semantic-release's `generateNotesCmd` (via @semantic-release/exec) so
 // the GitHub Release body matches the merchant-facing notes already curated in
 // readme.txt during the release-PR step. Single source of truth, no manual edit.
