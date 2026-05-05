@@ -114,8 +114,14 @@ prepare_release() {
   fi
 
   echo "==> Committing and pushing"
+  local commit_body
+  commit_body="$(git log "$last_tag..HEAD" --no-merges --pretty='* %s')"
   git add sokin-pay.php readme.txt
-  git commit --quiet -m "${RELEASE_COMMIT_PREFIX}${next_version}"
+  if [[ -n "$commit_body" ]]; then
+    git commit --quiet -m "${RELEASE_COMMIT_PREFIX}${next_version}" -m "$commit_body"
+  else
+    git commit --quiet -m "${RELEASE_COMMIT_PREFIX}${next_version}"
+  fi
   git push --quiet -u origin "release/v$next_version"
 
   echo "==> Opening PR"

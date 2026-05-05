@@ -75,22 +75,47 @@ jobs:
           B64=$(printf '%s' "${NOTES:-Maintenance updates.}" | base64 | tr -d '\n')
           node scripts/bump-wp-version.mjs "$VERSION" "$B64"
 
-      - name: Create release PR
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: release/v${{ steps.next.outputs.version }}
-          base: main
-          commit-message: |
-            chore(release): v${{ steps.next.outputs.version }}
-          title: |
-            release: v${{ steps.next.outputs.version }}
-          body: |
-            Prepares the release bump to v${{ steps.next.outputs.version }}.
+      - name: Commit, push, and open release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.next.outputs.version }}
+          CURRENT: ${{ steps.cur.outputs.current }}
+        shell: bash
+        run: |
+          set -euo pipefail
 
-            - Updates `sokin-pay.php` and `readme.txt`
-            - Changelog is kept newest-first
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-            After merging this PR, the Release workflow will tag and publish.
-          labels: release
+          BRANCH="release/v$VERSION"
+          git checkout -b "$BRANCH"
+
+          # Bullet-list of commit subjects since the last tag becomes the
+          # commit body. GitHub's squash UI defaults the squash body to the
+          # PR's single commit body, so this also seeds a useful squash body.
+          COMMITS=""
+          if [ -n "${CURRENT:-}" ] && git rev-parse -q --verify "v$CURRENT" >/dev/null; then
+            COMMITS="$(git log "v$CURRENT..HEAD" --no-merges --pretty='* %s')"
+          fi
+
+          git add sokin-pay.php readme.txt
+          if [ -n "$COMMITS" ]; then
+            git commit -m "chore(release): v$VERSION" -m "$COMMITS"
+          else
+            git commit -m "chore(release): v$VERSION"
+          fi
+
+          git push --force-with-lease -u origin "$BRANCH"
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "release: v$VERSION" \
+            --label release \
+            --body "Prepares the release bump to v$VERSION.
+
+          - Updates \`sokin-pay.php\` and \`readme.txt\`
+          - Changelog is kept newest-first
+
+          After merging this PR, the Release workflow will tag and publish."
 

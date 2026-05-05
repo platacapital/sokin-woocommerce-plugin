@@ -79,4 +79,4 @@ Submit the zip at https://wordpress.org/plugins/developers/add/. Once approved, 
 
 When the org issues a GitHub App token (or PAT) for releases, set it as `GITHUB_TOKEN` for the `npx semantic-release` step in `release.yml`. Releases created by an App or PAT do fire downstream `release` events, which makes the `publish` step automatic. The script stays as a recovery path.
 
-A second improvement is unblocking `prepare-release-pr.yml` (currently blocked by SRE) so the release PR can be opened from the Actions UI instead of locally. The script and the workflow can coexist.
+`prepare-release-pr.yml` is also kept up to date with the script: when SRE allows the bot to open PRs, dispatching the workflow will produce the same release PR (same `chore(release): v…` subject, same bullet-list commit body) the script produces locally. Until then, the script is the canonical entry point.
