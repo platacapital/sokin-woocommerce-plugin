@@ -105,7 +105,7 @@ function platasokin_gateway_log_warning( $message, $context = array() ) {
 		: $base_writable;
 
 	if ( function_exists( 'wc_get_logger' ) && $logs_writable ) {
-		$logger = wc_get_logger();
+		$logger            = wc_get_logger();
 		$context['source'] = $source;
 		$logger->warning( $message, $context );
 		return;
@@ -118,8 +118,8 @@ function platasokin_gateway_log_warning( $message, $context = array() ) {
 	if ( isset( $context['current_user_id'] ) ) {
 		$safe_context['current_user_id'] = $context['current_user_id'];
 	}
-	if ( isset( $context['stored_order_id'] ) ) {
-		$safe_context['stored_order_id'] = $context['stored_order_id'];
+	if ( isset( $context['sokin_order_id'] ) ) {
+		$safe_context['sokin_order_id'] = $context['sokin_order_id'];
 	}
 	if ( isset( $context['get_order_id'] ) ) {
 		$safe_context['get_order_id'] = $context['get_order_id'];
@@ -169,28 +169,20 @@ function platasokin_thankyou_handler( $order_id ) {
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	if ( isset( $_GET['orderId'] ) && '' !== $_GET['orderId'] ) {
-		$stored_order_id = $order->get_meta( 'orderId' );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$get_order_id = sanitize_text_field( wp_unslash( $_GET['orderId'] ) );
-
-		if ( empty( $stored_order_id ) || $stored_order_id !== $get_order_id ) {
-			platasokin_gateway_log_warning(
-				'Sokin Pay: orderId validation failed',
-				array(
-					'source'          => 'platasokin-gateway',
-					'order_id'        => $order_id,
-					'stored_order_id' => $stored_order_id,
-					'get_order_id'    => $get_order_id,
-				)
-			);
-			return;
-		}
+	$sokin_order_id = $order->get_meta( 'orderId' );
+	if ( ! empty( $sokin_order_id ) ) {
 
 		$payment_gateway_id = 'sokinpay_gateway';
 		$payment_gateways   = WC_Payment_Gateways::instance();
 		$gateways           = $payment_gateways->payment_gateways();
 		if ( ! isset( $gateways[ $payment_gateway_id ] ) ) {
+			platasokin_gateway_log_warning(
+				'Sokin Pay: payment gateway not found',
+				array(
+					'source'             => 'platasokin-gateway',
+					'payment_gateway_id' => $payment_gateway_id,
+				)
+			);
 			return;
 		}
 		$payment_gateway = $gateways[ $payment_gateway_id ];
@@ -202,7 +194,7 @@ function platasokin_thankyou_handler( $order_id ) {
 			),
 		);
 
-		$url     = $payment_gateway->platasokin_api_url . '/orders/' . $get_order_id;
+		$url     = $payment_gateway->platasokin_api_url . '/orders/' . $sokin_order_id;
 		$request = wp_remote_get( $url, $args );
 
 		if ( ! is_wp_error( $request ) ) {
@@ -210,25 +202,34 @@ function platasokin_thankyou_handler( $order_id ) {
 			$json_data = json_decode( $res_body, true );
 
 			if ( isset( $json_data['data']['order']['payments'] ) && is_array( $json_data['data']['order']['payments'] ) && ! empty( $json_data['data']['order']['payments'] ) && isset( $json_data['data']['order']['payments'][0]['status'] ) ) {
-				$order_status   = $json_data['data']['order']['orderStatus'];
-				$payment_status = strtolower( (string) $json_data['data']['order']['payments'][0]['status'] );
-				if ( 'declined' === $payment_status ) {
+				$order_status            = $json_data['data']['order']['orderStatus'];
+				$payment_status          = strtolower( (string) $json_data['data']['order']['payments'][0]['status'] );
+				$failed_payment_statuses = array( 'declined', 'failed' );
+				$is_payment_failed       = in_array( $payment_status, $failed_payment_statuses, true );
+				if ( $is_payment_failed ) {
 					$order->update_status( 'failed', __( 'Payment declined by Sokin.', 'sokin-pay' ) );
 					$order->save();
 					wc_add_notice( __( 'Your payment was declined. Please try again or choose a different payment method.', 'sokin-pay' ), 'error' );
 					wp_safe_redirect( $order->get_checkout_payment_url() );
 					exit;
-				} elseif ( (
-					'PROCESSED' === $order_status ||
+				} elseif ( 'PROCESSED' === $order_status ||
 					'IN-PROGRESS' === $order_status ||
 					'PENDING' === $order_status
-				) && 'declined' !== $payment_status ) {
+				) {
 					$order->update_status( 'processing' );
 					$order->save();
 					$order->payment_complete();
 				}
 			}
 		}
+	} else {
+		platasokin_gateway_log_warning(
+			'Sokin Pay: Sokin order id empty',
+			array(
+				'source'   => 'platasokin-gateway',
+				'order_id' => $order_id,
+			)
+		);
 	}
 }
 
@@ -284,8 +285,8 @@ function platasokin_init_gateway_class() {
 
 			$this->init_form_fields();
 			$this->init_settings();
-			$this->title                 = $this->get_option( 'title' );
-			$this->description           = $this->get_option( 'description' );
+			$this->title                   = $this->get_option( 'title' );
+			$this->description             = $this->get_option( 'description' );
 			$this->platasokin_redirect_url = $this->get_option( 'platasokin_redirect_url' );
 			$this->platasokin_x_api_key    = $this->get_option( 'platasokin_x_api_key' );
 			$this->platasokin_api_url      = $this->get_option( 'platasokin_api_url' );
@@ -313,13 +314,13 @@ function platasokin_init_gateway_class() {
 			foreach ( $key_map as $new_key => $old_key ) {
 				if ( isset( $settings[ $old_key ] ) && ( ! isset( $settings[ $new_key ] ) || '' === $settings[ $new_key ] ) ) {
 					$settings[ $new_key ] = $settings[ $old_key ];
-					$changed                = true;
+					$changed              = true;
 				}
 			}
 
 			if ( isset( $settings['woo_cpay_enabled'] ) && ( ! isset( $settings['enabled'] ) || '' === $settings['enabled'] ) ) {
 				$settings['enabled'] = $settings['woo_cpay_enabled'];
-				$changed               = true;
+				$changed             = true;
 			}
 
 			if ( $changed ) {
@@ -395,56 +396,256 @@ function platasokin_init_gateway_class() {
 		 */
 		private function getIsoNumericCountryCode( $alpha2 ) {
 			static $numeric_map = array(
-				'AD' => '020', 'AE' => '784', 'AF' => '004', 'AG' => '028', 'AI' => '660',
-				'AL' => '008', 'AM' => '051', 'AN' => '530', 'AO' => '024', 'AQ' => '010',
-				'AR' => '032', 'AS' => '016', 'AT' => '040', 'AU' => '036', 'AW' => '533',
-				'AX' => '248', 'AZ' => '031', 'BA' => '070', 'BB' => '052', 'BD' => '050',
-				'BE' => '056', 'BF' => '854', 'BG' => '100', 'BH' => '048', 'BI' => '108',
-				'BJ' => '204', 'BL' => '652', 'BM' => '060', 'BN' => '096', 'BO' => '068',
-				'BQ' => '535', 'BR' => '076', 'BS' => '044', 'BT' => '064', 'BV' => '074',
-				'BW' => '072', 'BY' => '112', 'BZ' => '084', 'CA' => '124', 'CC' => '166',
-				'CD' => '180', 'CF' => '140', 'CG' => '178', 'CH' => '756', 'CI' => '384',
-				'CK' => '184', 'CL' => '152', 'CM' => '120', 'CN' => '156', 'CO' => '170',
-				'CR' => '188', 'CU' => '192', 'CV' => '132', 'CW' => '531', 'CX' => '162',
-				'CY' => '196', 'CZ' => '203', 'DE' => '276', 'DJ' => '262', 'DK' => '208',
-				'DM' => '212', 'DO' => '214', 'DZ' => '012', 'EC' => '218', 'EE' => '233',
-				'EG' => '818', 'EH' => '732', 'ER' => '232', 'ES' => '724', 'ET' => '231',
-				'FI' => '246', 'FJ' => '242', 'FK' => '238', 'FM' => '583', 'FO' => '234',
-				'FR' => '250', 'GA' => '266', 'GB' => '826', 'GD' => '308', 'GE' => '268',
-				'GF' => '254', 'GG' => '831', 'GH' => '288', 'GI' => '292', 'GL' => '304',
-				'GM' => '270', 'GN' => '324', 'GP' => '312', 'GQ' => '226', 'GR' => '300',
-				'GS' => '239', 'GT' => '320', 'GU' => '316', 'GW' => '624', 'GY' => '328',
-				'HK' => '344', 'HM' => '334', 'HN' => '340', 'HR' => '191', 'HT' => '332',
-				'HU' => '348', 'ID' => '360', 'IE' => '372', 'IL' => '376', 'IM' => '833',
-				'IN' => '356', 'IO' => '086', 'IQ' => '368', 'IR' => '364', 'IS' => '352',
-				'IT' => '380', 'JE' => '832', 'JM' => '388', 'JO' => '400', 'JP' => '392',
-				'KE' => '404', 'KG' => '417', 'KH' => '116', 'KI' => '296', 'KM' => '174',
-				'KN' => '659', 'KP' => '408', 'KR' => '410', 'KW' => '414', 'KY' => '136',
-				'KZ' => '398', 'LA' => '418', 'LB' => '422', 'LC' => '662', 'LI' => '438',
-				'LK' => '144', 'LR' => '430', 'LS' => '426', 'LT' => '440', 'LU' => '442',
-				'LV' => '428', 'LY' => '434', 'MA' => '504', 'MC' => '492', 'MD' => '498',
-				'ME' => '499', 'MF' => '663', 'MG' => '450', 'MH' => '584', 'MK' => '807',
-				'ML' => '466', 'MM' => '104', 'MN' => '496', 'MO' => '446', 'MP' => '580',
-				'MQ' => '474', 'MR' => '478', 'MS' => '500', 'MT' => '470', 'MU' => '480',
-				'MV' => '462', 'MW' => '454', 'MX' => '484', 'MY' => '458', 'MZ' => '508',
-				'NA' => '516', 'NC' => '540', 'NE' => '562', 'NF' => '574', 'NG' => '566',
-				'NI' => '558', 'NL' => '528', 'NO' => '578', 'NP' => '524', 'NR' => '520',
-				'NU' => '570', 'NZ' => '554', 'OM' => '512', 'PA' => '591', 'PE' => '604',
-				'PF' => '258', 'PG' => '598', 'PH' => '608', 'PK' => '586', 'PL' => '616',
-				'PM' => '666', 'PN' => '612', 'PR' => '630', 'PS' => '275', 'PT' => '620',
-				'PW' => '585', 'PY' => '600', 'QA' => '634', 'RE' => '638', 'RO' => '642',
-				'RS' => '688', 'RU' => '643', 'RW' => '646', 'SA' => '682', 'SB' => '090',
-				'SC' => '690', 'SD' => '729', 'SE' => '752', 'SG' => '702', 'SH' => '654',
-				'SI' => '705', 'SJ' => '744', 'SK' => '703', 'SL' => '694', 'SM' => '674',
-				'SN' => '686', 'SO' => '706', 'SR' => '740', 'SS' => '728', 'ST' => '678',
-				'SV' => '222', 'SX' => '534', 'SY' => '760', 'SZ' => '748', 'TC' => '796',
-				'TD' => '148', 'TF' => '260', 'TG' => '768', 'TH' => '764', 'TJ' => '762',
-				'TK' => '772', 'TL' => '626', 'TM' => '795', 'TN' => '788', 'TO' => '776',
-				'TR' => '792', 'TT' => '780', 'TV' => '798', 'TW' => '158', 'TZ' => '834',
-				'UA' => '804', 'UG' => '800', 'UM' => '581', 'US' => '840', 'UY' => '858',
-				'UZ' => '860', 'VA' => '336', 'VC' => '670', 'VE' => '862', 'VG' => '092',
-				'VI' => '850', 'VN' => '704', 'VU' => '548', 'WF' => '876', 'WS' => '882',
-				'XK' => '383', 'YE' => '887', 'YT' => '175', 'ZA' => '710', 'ZM' => '894',
+				'AD' => '020',
+				'AE' => '784',
+				'AF' => '004',
+				'AG' => '028',
+				'AI' => '660',
+				'AL' => '008',
+				'AM' => '051',
+				'AN' => '530',
+				'AO' => '024',
+				'AQ' => '010',
+				'AR' => '032',
+				'AS' => '016',
+				'AT' => '040',
+				'AU' => '036',
+				'AW' => '533',
+				'AX' => '248',
+				'AZ' => '031',
+				'BA' => '070',
+				'BB' => '052',
+				'BD' => '050',
+				'BE' => '056',
+				'BF' => '854',
+				'BG' => '100',
+				'BH' => '048',
+				'BI' => '108',
+				'BJ' => '204',
+				'BL' => '652',
+				'BM' => '060',
+				'BN' => '096',
+				'BO' => '068',
+				'BQ' => '535',
+				'BR' => '076',
+				'BS' => '044',
+				'BT' => '064',
+				'BV' => '074',
+				'BW' => '072',
+				'BY' => '112',
+				'BZ' => '084',
+				'CA' => '124',
+				'CC' => '166',
+				'CD' => '180',
+				'CF' => '140',
+				'CG' => '178',
+				'CH' => '756',
+				'CI' => '384',
+				'CK' => '184',
+				'CL' => '152',
+				'CM' => '120',
+				'CN' => '156',
+				'CO' => '170',
+				'CR' => '188',
+				'CU' => '192',
+				'CV' => '132',
+				'CW' => '531',
+				'CX' => '162',
+				'CY' => '196',
+				'CZ' => '203',
+				'DE' => '276',
+				'DJ' => '262',
+				'DK' => '208',
+				'DM' => '212',
+				'DO' => '214',
+				'DZ' => '012',
+				'EC' => '218',
+				'EE' => '233',
+				'EG' => '818',
+				'EH' => '732',
+				'ER' => '232',
+				'ES' => '724',
+				'ET' => '231',
+				'FI' => '246',
+				'FJ' => '242',
+				'FK' => '238',
+				'FM' => '583',
+				'FO' => '234',
+				'FR' => '250',
+				'GA' => '266',
+				'GB' => '826',
+				'GD' => '308',
+				'GE' => '268',
+				'GF' => '254',
+				'GG' => '831',
+				'GH' => '288',
+				'GI' => '292',
+				'GL' => '304',
+				'GM' => '270',
+				'GN' => '324',
+				'GP' => '312',
+				'GQ' => '226',
+				'GR' => '300',
+				'GS' => '239',
+				'GT' => '320',
+				'GU' => '316',
+				'GW' => '624',
+				'GY' => '328',
+				'HK' => '344',
+				'HM' => '334',
+				'HN' => '340',
+				'HR' => '191',
+				'HT' => '332',
+				'HU' => '348',
+				'ID' => '360',
+				'IE' => '372',
+				'IL' => '376',
+				'IM' => '833',
+				'IN' => '356',
+				'IO' => '086',
+				'IQ' => '368',
+				'IR' => '364',
+				'IS' => '352',
+				'IT' => '380',
+				'JE' => '832',
+				'JM' => '388',
+				'JO' => '400',
+				'JP' => '392',
+				'KE' => '404',
+				'KG' => '417',
+				'KH' => '116',
+				'KI' => '296',
+				'KM' => '174',
+				'KN' => '659',
+				'KP' => '408',
+				'KR' => '410',
+				'KW' => '414',
+				'KY' => '136',
+				'KZ' => '398',
+				'LA' => '418',
+				'LB' => '422',
+				'LC' => '662',
+				'LI' => '438',
+				'LK' => '144',
+				'LR' => '430',
+				'LS' => '426',
+				'LT' => '440',
+				'LU' => '442',
+				'LV' => '428',
+				'LY' => '434',
+				'MA' => '504',
+				'MC' => '492',
+				'MD' => '498',
+				'ME' => '499',
+				'MF' => '663',
+				'MG' => '450',
+				'MH' => '584',
+				'MK' => '807',
+				'ML' => '466',
+				'MM' => '104',
+				'MN' => '496',
+				'MO' => '446',
+				'MP' => '580',
+				'MQ' => '474',
+				'MR' => '478',
+				'MS' => '500',
+				'MT' => '470',
+				'MU' => '480',
+				'MV' => '462',
+				'MW' => '454',
+				'MX' => '484',
+				'MY' => '458',
+				'MZ' => '508',
+				'NA' => '516',
+				'NC' => '540',
+				'NE' => '562',
+				'NF' => '574',
+				'NG' => '566',
+				'NI' => '558',
+				'NL' => '528',
+				'NO' => '578',
+				'NP' => '524',
+				'NR' => '520',
+				'NU' => '570',
+				'NZ' => '554',
+				'OM' => '512',
+				'PA' => '591',
+				'PE' => '604',
+				'PF' => '258',
+				'PG' => '598',
+				'PH' => '608',
+				'PK' => '586',
+				'PL' => '616',
+				'PM' => '666',
+				'PN' => '612',
+				'PR' => '630',
+				'PS' => '275',
+				'PT' => '620',
+				'PW' => '585',
+				'PY' => '600',
+				'QA' => '634',
+				'RE' => '638',
+				'RO' => '642',
+				'RS' => '688',
+				'RU' => '643',
+				'RW' => '646',
+				'SA' => '682',
+				'SB' => '090',
+				'SC' => '690',
+				'SD' => '729',
+				'SE' => '752',
+				'SG' => '702',
+				'SH' => '654',
+				'SI' => '705',
+				'SJ' => '744',
+				'SK' => '703',
+				'SL' => '694',
+				'SM' => '674',
+				'SN' => '686',
+				'SO' => '706',
+				'SR' => '740',
+				'SS' => '728',
+				'ST' => '678',
+				'SV' => '222',
+				'SX' => '534',
+				'SY' => '760',
+				'SZ' => '748',
+				'TC' => '796',
+				'TD' => '148',
+				'TF' => '260',
+				'TG' => '768',
+				'TH' => '764',
+				'TJ' => '762',
+				'TK' => '772',
+				'TL' => '626',
+				'TM' => '795',
+				'TN' => '788',
+				'TO' => '776',
+				'TR' => '792',
+				'TT' => '780',
+				'TV' => '798',
+				'TW' => '158',
+				'TZ' => '834',
+				'UA' => '804',
+				'UG' => '800',
+				'UM' => '581',
+				'US' => '840',
+				'UY' => '858',
+				'UZ' => '860',
+				'VA' => '336',
+				'VC' => '670',
+				'VE' => '862',
+				'VG' => '092',
+				'VI' => '850',
+				'VN' => '704',
+				'VU' => '548',
+				'WF' => '876',
+				'WS' => '882',
+				'XK' => '383',
+				'YE' => '887',
+				'YT' => '175',
+				'ZA' => '710',
+				'ZM' => '894',
 				'ZW' => '716',
 			);
 
@@ -527,22 +728,22 @@ function platasokin_init_gateway_class() {
 			}
 
 			$body = array(
-				'type'        => 'SINGLE',
-				'currency'    => $order->get_currency(),
-				'totalAmount' => $order->get_total(),
-				'description' => '',
-				'redirectURL' => $order->get_checkout_order_received_url(),
-				'referenceNo' => gmdate( 'Ymds' ),
-				'memo'        => '',
-				'recurring'   => array(
+				'type'            => 'SINGLE',
+				'currency'        => $order->get_currency(),
+				'totalAmount'     => $order->get_total(),
+				'description'     => '',
+				'redirectURL'     => $order->get_checkout_order_received_url(),
+				'referenceNo'     => gmdate( 'Ymds' ),
+				'memo'            => '',
+				'recurring'       => array(
 					'frequency'          => 'ONCE',
 					'paymentCount'       => 1,
 					'firstPaymentDate'   => $order_date,
 					'firstPaymentAmount' => $order->get_total(),
 				),
-				'firstName'   => $order->get_billing_first_name(),
-				'lastName'    => $order->get_billing_last_name(),
-				'email'       => $order->get_billing_email(),
+				'firstName'       => $order->get_billing_first_name(),
+				'lastName'        => $order->get_billing_last_name(),
+				'email'           => $order->get_billing_email(),
 				'billing_address' => $billing_address,
 			);
 
