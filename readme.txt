@@ -1,11 +1,11 @@
 === Sokin Pay ===
 Contributors: platasokin
-Version: 1.1.4
+Version: 1.1.5
 Tags: woocommerce, payments, payment gateway, credit card, ecommerce
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -71,6 +71,10 @@ Is WooCommerce plugin mandatory for Sokin Pay plugin?
 Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and data.
 
 == Changelog ==
+
+= 1.1.5 =
+* Released: 2026-06-22
+* Fixed an issue where an order could be incorrectly marked as received after a failed or declined payment (for example, Alipay refusals). Failed and declined payments are now correctly marked as failed and the customer is returned to the payment page to try again.
 
 = 1.1.4 =
 * Released: 2026-05-04
