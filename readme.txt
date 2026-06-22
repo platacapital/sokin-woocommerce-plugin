@@ -11,7 +11,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 Easily accept payments on your WordPress site via Sokin Pay payment gateway.
 
-=== Description ===
+== Description ==
 This plugin seamlessly integrates with your WooCommerce store, providing a secure and efficient way to process payments. Enable a variety of secure payment options, including credit cards and pay by bank.
 Register your business account at [sokin.com](https://sokin.com/business/business-account-signup/).
 
@@ -65,11 +65,6 @@ For any issues or questions, please contact our support team at [support@sokin.c
 == Installation ==
 * It is required to install WooCommerce plugin (https://wordpress.org/plugins/woocommerce) before Sokin Pay installation.
 * Upload the Sokin Pay plugin to your WordPress website, activate it, and then configure the API settings.
-
-== Features ==
-* Quick installation and setup.
-
-The setup is very easy. Once you have installed the plugin, all you need to do is enter your Sokin API credentials in the plugin settings and your website will be ready to accept payments.
 
 == Frequently Asked Questions ==
 Is WooCommerce plugin mandatory for Sokin Pay plugin?
