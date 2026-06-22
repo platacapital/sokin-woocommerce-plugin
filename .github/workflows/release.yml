@@ -23,8 +23,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      issues: write
-      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -37,11 +35,36 @@ jobs:
           node-version: '22.14.0'
           check-latest: true
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Determine release version
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -Eo "\*\s*Version:\s*[^\r\n]+" sokin-pay.php | awk '{print $3}')
+          if [ -z "$VERSION" ]; then
+            echo "Could not determine version from sokin-pay.php header" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Run semantic-release
+      - name: Create tag and GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; nothing to do."
+            exit 0
+          fi
+          # Merchant-facing notes come from the readme.txt changelog entry that
+          # the release-PR step curated for this version. Single source of truth.
+          node scripts/extract-readme-notes.mjs "$VERSION" > "$RUNNER_TEMP/release-notes.md"
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
 

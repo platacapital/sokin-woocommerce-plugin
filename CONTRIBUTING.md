@@ -60,7 +60,7 @@ There are several ways you can contribute to this project:
    For an isolated stack, follow **Option 2: Using Docker Compose** in `README.md`. For an existing WordPress tree, follow **Option 1: Manual Installation** there.
 
 3. **Optional tooling**:
-   - Node.js is only needed if you change semantic-release or other Node-based automation (`npm ci` from the repository root).
+   - Node.js is only needed if you run the release scripts in `scripts/` (e.g. `scripts/bump-wp-version.mjs`). They use the Node standard library only — there are no dependencies to install.
 
 4. **Testing locally**:
    - Use sandbox credentials and the checklist in the **Testing** section of `README.md`.

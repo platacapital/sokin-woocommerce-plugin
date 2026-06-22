@@ -25,7 +25,7 @@ This plugin enables WooCommerce stores to accept payments through Sokin Pay, pro
 
 2. Activate the plugin through the WordPress admin panel.
 
-   This plugin ships without Composer or npm runtime dependencies. If you are changing release automation (semantic-release), install tooling from the repository root with `npm ci`.
+   This plugin ships without Composer or npm dependencies. Release automation runs entirely on `gh` and a small Node script (`scripts/`), so there is no build step or `node_modules` to install.
 
 ### Option 2: Using Docker Compose (Recommended for Isolated Testing)
 
@@ -124,19 +124,17 @@ Details below are primarily for **maintainers** who cut releases; day-to-day con
 
 ### Automated (recommended)
 
-1. **Write Conventional Commits**
-   - Only `feat`, `fix`, `perf`, or commits marked as BREAKING CHANGES will trigger a release.
-   - Other commit types (`chore`, `docs`, `ci`, `build`, etc.) are ignored by semantic-release.
+The full flow is documented in [`RELEASING.md`](RELEASING.md); `scripts/release.sh` is the canonical entry point. In short:
 
-2. **Merge to `main`**
-   - The `Release` workflow is triggered on merges that touch plugin files (`sokin-pay.php`, `includes/**`, `assets/**`, `languages/**`, `readme.txt`, etc.), but the release job only runs for the `chore(release): vX.Y.Z` merge commit from the Release PR.
-   - The workflow can also be run manually from the Actions tab (`workflow_dispatch`).
+1. **Open a release PR** (`scripts/release.sh prepare` or the **Prepare Release PR** workflow)
+   - Prompts for the bump type and merchant-facing notes, then runs `scripts/bump-wp-version.mjs` to update `sokin-pay.php`, `readme.txt`, the WordPress changelog order, and all internal versioned constants/script/style handles used by WooCommerce.
+   - Opens a PR whose commit subject is `chore(release): vX.Y.Z`.
 
-3. **Semantic-release automation**
-   - Calculates the next version and uses `scripts/bump-wp-version.mjs` to update `sokin-pay.php`, `readme.txt`, the WordPress changelog order, and all internal versioned constants/script/style handles used by WooCommerce.
-   - Commits the version bump, creates a `vX.Y.Z` git tag, and publishes a GitHub Release with generated notes and an attached zip built from `.distignore` (no `docker-entrypoint.sh`).
-   - When triggered via the **Prepare Release PR** workflow, any `notes` you provide are fed into the bump script and included in the `readme.txt` changelog entry for that version.
-   - The `Release` workflow only runs automatically when the `chore(release): vX.Y.Z` merge commit from the Release PR hits `main`, or when manually dispatched from Actions.
+2. **Squash-merge to `main`**
+   - The `Release` workflow runs only for the `chore(release): vX.Y.Z` merge commit (it keys off that subject prefix), or when manually dispatched from the Actions tab (`workflow_dispatch`).
+
+3. **Tag and GitHub Release**
+   - The workflow reads the version from the `sokin-pay.php` header, generates the release notes from the matching `readme.txt` changelog entry (`scripts/extract-readme-notes.mjs`), and creates the `vX.Y.Z` tag plus GitHub Release with `gh`. It is idempotent: if the release already exists it does nothing.
 
 4. **WordPress.org deployment**
    - The `Deploy to WordPress.org` workflow fires when the GitHub Release is published.
@@ -167,7 +165,7 @@ If the automation is unavailable, you can still cut a release manually while let
    zip -r sokin-woocommerce-plugin-vX.Y.Z.zip . \
      -x "**/.git*" "**/.DS_Store" "local-dev/*" "tests/*" "wp-content/*" \
         "docker-compose*" "*.log" "**/docker-entrypoint.sh" "scripts/*" \
-        "package.json" "package-lock.json" ".releaserc.json" ".distignore"
+        ".distignore"
    ```
 5. Upload the archive wherever needed (for example, to a marketplace that does not consume the GitHub Release directly).
 
