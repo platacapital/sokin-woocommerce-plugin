@@ -20,8 +20,12 @@
         ]
       }
     ],
-    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/exec",
+      {
+        "generateNotesCmd": "node scripts/extract-readme-notes.mjs ${nextRelease.version}"
+      }
+    ],
     "@semantic-release/github"
   ]
 }
-
