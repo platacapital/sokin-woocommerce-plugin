@@ -799,17 +799,3 @@ function platasokin_init_gateway_class() {
 	}
 }
 
-add_filter( 'woocommerce_order_actions', 'platasokin_hide_refund_button_for_failed_orders', 10, 2 );
-
-/**
- * @param array<string, string> $actions Order actions.
- * @param WC_Order              $order   Order.
- * @return array<string, string>
- */
-function platasokin_hide_refund_button_for_failed_orders( $actions, $order ) {
-	if ( 'failed' === $order->get_status() ) {
-		$css = '<style>.button.refund-items{display: none;}</style>';
-		echo wp_kses( $css, array( 'style' => array() ) );
-	}
-	return $actions;
-}

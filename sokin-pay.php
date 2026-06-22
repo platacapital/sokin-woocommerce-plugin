@@ -71,6 +71,21 @@ function platasokin_register_gateway_scripts( $hook ) {
 		true
 	);
 	wp_enqueue_script( 'platasokin_gateway_admin' );
+
+	// Register an inline-only style handle so per-order rules (e.g. hiding the
+	// refund button on failed orders) can be attached via wp_add_inline_style
+	// instead of echoing <style> tags from filters.
+	wp_register_style( 'platasokin_gateway_admin_style', false, array(), PLATASOKIN_VERSION );
+	wp_enqueue_style( 'platasokin_gateway_admin_style' );
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen parameter, no state change.
+	$order_id = isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0;
+	if ( $order_id && function_exists( 'wc_get_order' ) ) {
+		$order = wc_get_order( $order_id );
+		if ( $order && 'failed' === $order->get_status() ) {
+			wp_add_inline_style( 'platasokin_gateway_admin_style', '.button.refund-items{display:none;}' );
+		}
+	}
 }
 
 add_action( 'admin_enqueue_scripts', 'platasokin_register_gateway_scripts' );
