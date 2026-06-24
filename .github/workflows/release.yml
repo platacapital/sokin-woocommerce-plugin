@@ -40,7 +40,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          VERSION=$(grep -Eo "\*\s*Version:\s*[^\r\n]+" sokin-pay.php | awk '{print $3}')
+          VERSION=$(sed -nE 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*([^[:space:]]+).*/\1/p' sokin-pay.php)
           if [ -z "$VERSION" ]; then
             echo "Could not determine version from sokin-pay.php header" >&2
             exit 1
@@ -60,6 +60,10 @@ jobs:
             echo "Release $TAG already exists; nothing to do."
             exit 0
           fi
+          if git tag --list "$TAG" | grep -Fxq "$TAG"; then
+            echo "Tag $TAG already exists without a GitHub Release; refusing to create release for a possibly stale tag." >&2
+            exit 1
+          fi
           # Merchant-facing notes come from the readme.txt changelog entry that
           # the release-PR step curated for this version. Single source of truth.
           node scripts/extract-readme-notes.mjs "$VERSION" > "$RUNNER_TEMP/release-notes.md"
@@ -67,4 +71,3 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "$TAG" \
             --notes-file "$RUNNER_TEMP/release-notes.md"
-
