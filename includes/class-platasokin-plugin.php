@@ -37,7 +37,7 @@ class Platasokin_Plugin {
 
 	public function __construct() {
 		$this->version = PLATASOKIN_VERSION;
-		$this->plugin_name = 'Sokin Pay';
+		$this->plugin_name = 'Sokin Checkout';
 
 		$this->load_dependencies();
 		$this->set_locale();

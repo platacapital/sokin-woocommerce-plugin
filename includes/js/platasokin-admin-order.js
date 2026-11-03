@@ -1,7 +1,7 @@
 // jQuery Function calls on ready state
 jQuery(function ($) {
 	/*
-		Make Title and Description fields non-tabbable in the Sokin Pay form of the Payments tab on WooCommerce->Settings page
+		Make Title and Description fields non-tabbable in the Sokin Checkout form of the Payments tab on WooCommerce->Settings page
 	*/
 	$('#woocommerce_sokinpay_gateway_title').attr('tabindex', '-1');
 	$('#woocommerce_sokinpay_gateway_description').attr('tabindex', '-1');

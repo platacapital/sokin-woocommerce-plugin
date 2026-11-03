@@ -1,5 +1,5 @@
 const sokinPaySettings       = window.wc.wcSettings.getSetting( 'sokinpay_gateway_data', {} );
-const sokinPayLabel          = window.wp.htmlEntities.decodeEntities( sokinPaySettings.title ) || window.wp.i18n.__( 'Sokin Pay', 'sokin-pay' );
+const sokinPayLabel          = window.wp.htmlEntities.decodeEntities( sokinPaySettings.title ) || window.wp.i18n.__( 'Sokin Checkout', 'sokin-checkout' );
 const sokinPayContent        = () => {
 	return window.wp.htmlEntities.decodeEntities( sokinPaySettings.description || '' );
 };

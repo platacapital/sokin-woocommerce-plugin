@@ -1,3 +1,3 @@
 /**
- * Front-end scripts for the Sokin Pay gateway (reserved for future checkout UI).
+ * Front-end scripts for the Sokin Checkout gateway (reserved for future checkout UI).
  */

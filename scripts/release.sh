@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sokin Pay release helper.
+# Sokin Checkout release helper.
 #
 # Walks an engineer through the manual release flow documented in RELEASING.md.
 # Subcommands:
@@ -105,7 +105,7 @@ prepare_release() {
   echo
   echo "==> Diff to be committed:"
   echo
-  git --no-pager diff -- sokin-pay.php readme.txt
+  git --no-pager diff -- sokin-checkout.php readme.txt
   echo
 
   if ! confirm "Commit and push this diff?"; then
@@ -116,7 +116,7 @@ prepare_release() {
   echo "==> Committing and pushing"
   local commit_body
   commit_body="$(git log "$last_tag..HEAD" --no-merges --pretty='* %s')"
-  git add sokin-pay.php readme.txt
+  git add sokin-checkout.php readme.txt
   if [[ -n "$commit_body" ]]; then
     git commit --quiet -m "${RELEASE_COMMIT_PREFIX}${next_version}" -m "$commit_body"
   else

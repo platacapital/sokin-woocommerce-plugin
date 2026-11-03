@@ -1,10 +1,10 @@
-# Sokin Pay for WooCommerce
+# Sokin Checkout for WooCommerce
 
-A WordPress plugin that integrates Sokin Pay payment gateway with WooCommerce.
+A WordPress plugin that integrates Sokin Checkout payment gateway with WooCommerce.
 
 ## Overview
 
-This plugin enables WooCommerce stores to accept payments through Sokin Pay, providing secure payment processing options including credit cards and pay by bank transfers.
+This plugin enables WooCommerce stores to accept payments through Sokin Checkout, providing secure payment processing options including credit cards and pay by bank transfers.
 
 ## Requirements
 
@@ -88,7 +88,7 @@ Deploying a previously published ECR image only pulls that image. It does not re
     *   WordPress Admin: `https://localhost:8443/wp-admin/`
     *   Admin Username: `testadmin` (or as set in `docker-compose.yml`)
     *   Admin Password: `testpass` (or as set in `docker-compose.yml`)
-    *   Compose bind-mounts the repository into the container at `wp-content/plugins/sokin-pay` (the WordPress.org plugin slug), so edits on the host are reflected immediately.
+    *   Compose bind-mounts the repository into the container at `wp-content/plugins/sokin-checkout` (the WordPress.org plugin slug), so edits on the host are reflected immediately.
 6.  **Stopping the Environment:** From the project **root** directory:
     ```bash
     docker-compose down
@@ -97,20 +97,23 @@ Deploying a previously published ECR image only pulls that image. It does not re
     ```bash
     docker-compose down -v
     ```
+
+For an existing manual installation named `sokin-pay`, deactivate that plugin before activating Sokin Checkout. Existing gateway IDs and saved credentials are retained. Keep only one of these plugin installations active.
+
 ## Configuration
 1. Go to WooCommerce > Settings > Payments
-2. Enable and configure Sokin Pay
+2. Enable and configure Sokin Checkout
 3. Enter your API credentials from your [Sokin Business Account](https://sokin.com/business/business-account-signup/)
 
 ## Developer Hooks
 
-Sokin Pay exposes checkout field extension points through plugin-prefixed hooks:
+Sokin Checkout exposes checkout field extension points through plugin-prefixed hooks:
 
 - `platasokin_credit_card_form_start`
 - `platasokin_credit_card_form_end`
 
 If your integration previously used `woocommerce_credit_card_form_start` or
-`woocommerce_credit_card_form_end` for Sokin Pay checkout customizations, update it
+`woocommerce_credit_card_form_end` for Sokin Checkout checkout customizations, update it
 to the `platasokin_*` hook names above.
 
 ## Testing
@@ -123,7 +126,13 @@ bash tests/verify-plugin-check.sh sokin-woocommerce-plugin-wordpress-1 /tmp/soki
 
 The script updates Plugin Check to the latest published version, stages the same files as the release workflow using `.distignore`, and runs static and runtime checks in a temporary container, including experimental and low-severity checks.
 
-Sokin Pay must already be active in the supplied container. Its installed files remain unchanged. It exits unsuccessfully if the checker reports any errors or warnings. Results and diagnostic output are saved to the report path and its `.stderr` companion.
+Sokin Checkout must already be active in the supplied container. Its installed files remain unchanged. It exits unsuccessfully if the checker reports any errors or warnings. Results and diagnostic output are saved to the report path and its `.stderr` companion.
+
+Verify the renamed plugin's identity and retained gateway settings with:
+
+```bash
+docker exec sokin-woocommerce-plugin-wordpress-1 wp eval-file wp-content/plugins/sokin-checkout/tests/verify-checkout-identity.php
+```
 
 There is no PHPUnit suite checked into this repository yet. Verify payment behavior with sandbox credentials before going live:
 
@@ -141,14 +150,14 @@ Details below are primarily for **maintainers** who cut releases; day-to-day con
 The full flow is documented in [`RELEASING.md`](RELEASING.md); `scripts/release.sh` is the canonical entry point. In short:
 
 1. **Open a release PR** (`scripts/release.sh prepare` or the **Prepare Release PR** workflow)
-   - Prompts for the bump type and merchant-facing notes, then runs `scripts/bump-wp-version.mjs` to update `sokin-pay.php`, `readme.txt`, the WordPress changelog order, and all internal versioned constants/script/style handles used by WooCommerce.
+   - Prompts for the bump type and merchant-facing notes, then runs `scripts/bump-wp-version.mjs` to update `sokin-checkout.php`, `readme.txt`, the WordPress changelog order, and all internal versioned constants/script/style handles used by WooCommerce.
    - Opens a PR whose commit subject is `chore(release): vX.Y.Z`.
 
 2. **Squash-merge to `main`**
    - The `Release` workflow runs only for the `chore(release): vX.Y.Z` merge commit (it keys off that subject prefix), or when manually dispatched from the Actions tab (`workflow_dispatch`).
 
 3. **Tag and GitHub Release**
-   - The workflow reads the version from the `sokin-pay.php` header, generates the release notes from the matching `readme.txt` changelog entry (`scripts/extract-readme-notes.mjs`), and creates the `vX.Y.Z` tag plus GitHub Release with `gh`. It is idempotent: if the release already exists it does nothing.
+   - The workflow reads the version from the `sokin-checkout.php` header, generates the release notes from the matching `readme.txt` changelog entry (`scripts/extract-readme-notes.mjs`), and creates the `vX.Y.Z` tag plus GitHub Release with `gh`. It is idempotent: if the release already exists it does nothing.
 
 4. **WordPress.org deployment**
    - The `Deploy to WordPress.org` workflow fires when the GitHub Release is published.
@@ -171,7 +180,7 @@ If the automation is unavailable, you can still cut a release manually while let
    NOTES_B64=$(printf 'Short description of changes for X.Y.Z' | base64)
    RELEASE_NOTES_B64="$NOTES_B64" node scripts/bump-wp-version.mjs X.Y.Z
    ```
-   This updates `sokin-pay.php`, `readme.txt`, the internal plugin/class/script/style versions, and prepends a `= X.Y.Z =` changelog entry built from the provided or derived notes.
+   This updates `sokin-checkout.php`, `readme.txt`, the internal plugin/class/script/style versions, and prepends a `= X.Y.Z =` changelog entry built from the provided or derived notes.
 2. Review the diff, then commit and push the changes to `main` (for example: `chore(release): vX.Y.Z`).
 3. Create a GitHub Release targeting `main`, adding a new `vX.Y.Z` tag and release notes.
 4. If you need a manual zip (e.g. for marketplaces), package the plugin, mirroring `.distignore` exclusions:
@@ -190,7 +199,7 @@ Before relying on the automation, add these repository secrets:
 - `WPORG_USERNAME`
 - `WPORG_PASSWORD`
 
-The workflows assume the WordPress.org slug is `sokin-pay` (configured via the `PLUGIN_SLUG` environment variable), while the GitHub repository name remains `sokin-woocommerce-plugin`.
+The workflows assume the WordPress.org slug is `sokin-checkout` (configured via the `PLUGIN_SLUG` environment variable), while the GitHub repository name remains `sokin-woocommerce-plugin`.
 
 ## Contributing
 

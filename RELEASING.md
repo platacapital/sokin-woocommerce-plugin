@@ -1,4 +1,4 @@
-# Releasing Sokin Pay
+# Releasing Sokin Checkout
 
 The release flow is currently manual end-to-end because the GitHub-Actions automation that opens the release PR is blocked by SRE policy, and because releases created with the default `GITHUB_TOKEN` do not fire downstream workflow events. `scripts/release.sh` walks you through it.
 
@@ -39,26 +39,28 @@ After merge, watch the `Release` workflow:
 gh run watch -R platacapital/sokin-woocommerce-plugin
 ```
 
-It reads the version from the `sokin-pay.php` header, builds the notes from the matching `readme.txt` changelog entry, and creates the `v$VERSION` tag and GitHub Release with `gh`. The job is idempotent: if the release already exists it exits without doing anything.
+It reads the version from the `sokin-checkout.php` header, builds the notes from the matching `readme.txt` changelog entry, and creates the `v$VERSION` tag and GitHub Release with `gh`. The job is idempotent: if the release already exists it exits without doing anything.
 
 ### `publish`
 
 The Release workflow creates the release with the default `GITHUB_TOKEN`. GitHub deliberately suppresses downstream workflow runs for events created by that token, so `deploy-wporg.yml` and `deploy-release.yaml` do not auto-fire. `scripts/release.sh publish v$VERSION` triggers both manually using `gh workflow run`. They build the dist zip, attach it to the GitHub Release, push to `plugins.svn.wordpress.org`, and redeploy `demo.wordpress.sokin.com`.
+
+The published `v1.1.6` GitHub tag predates the rename from `sokin-pay` to `sokin-checkout`. The renamed 1.1.6 ZIP is a manual submission revision. For automated WordPress.org publishing after this rename merges, first create a new release from the updated source, then publish that new tag. Do not deploy the old tag under the new slug.
 
 ## Initial WordPress.org submission
 
 The first time you publish a plugin slug, WordPress.org's review queue requires a clean zip submitted manually before the SVN repo exists. Build the same zip the workflow would build:
 
 ```bash
-WORKTREE=/tmp/sokin-pay-build
+WORKTREE=/tmp/sokin-checkout-build
 rm -rf "$WORKTREE"
 git worktree add --detach "$WORKTREE" "v$VERSION"
 cd "$WORKTREE"
 rsync -rc --delete --exclude-from=.distignore ./ ./dist/
 cd dist
-zip -r "/tmp/sokin-pay-v$VERSION.zip" . -x '*.DS_Store'
+zip -r "/tmp/sokin-checkout-v$VERSION.zip" . -x '*.DS_Store'
 cd - && git worktree remove "$WORKTREE"
-ls -lh "/tmp/sokin-pay-v$VERSION.zip"
+ls -lh "/tmp/sokin-checkout-v$VERSION.zip"
 ```
 
 Submit the zip at https://wordpress.org/plugins/developers/add/. Once approved, the slug exists on `plugins.svn.wordpress.org` and `scripts/release.sh publish` works end-to-end.

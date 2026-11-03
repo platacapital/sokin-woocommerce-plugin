@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'sokin-pay.php'
+      - 'sokin-checkout.php'
       - 'includes/**'
       - 'assets/**'
       - 'languages/**'
@@ -40,9 +40,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          VERSION=$(sed -nE 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*([^[:space:]]+).*/\1/p' sokin-pay.php)
+          VERSION=$(sed -nE 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*([^[:space:]]+).*/\1/p' sokin-checkout.php)
           if [ -z "$VERSION" ]; then
-            echo "Could not determine version from sokin-pay.php header" >&2
+            echo "Could not determine version from sokin-checkout.php header" >&2
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
