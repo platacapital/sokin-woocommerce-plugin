@@ -73,7 +73,7 @@ PLUGIN_DIR="/var/www/html/wp-content/plugins/sokin-pay"
 # When the host repository is bind-mounted into the container (as in the
 # default local docker-compose.yml), running this on the mount would delete
 # files from the developer's checkout (including .git, docker-compose.yml,
-# package.json, etc.). The default is therefore to SKIP this step; opt in
+# etc.). The default is therefore to SKIP this step; opt in
 # explicitly via SOKIN_NORMALIZE_PLUGIN_TREE=1 in environments that ship a
 # self-contained image (e.g. the deploy/release pipeline) and where the
 # plugin directory is NOT a host bind mount.
@@ -91,9 +91,6 @@ if [ "${SOKIN_NORMALIZE_PLUGIN_TREE:-0}" = "1" ]; then
     rm -f \
       "$PLUGIN_DIR"/docker-compose* \
       "$PLUGIN_DIR"/*.log \
-      "$PLUGIN_DIR"/package.json \
-      "$PLUGIN_DIR"/package-lock.json \
-      "$PLUGIN_DIR"/.releaserc.json \
       "$PLUGIN_DIR"/.distignore
 
     # Clean common hidden cruft (matches README packaging excludes for .git* and .DS_Store)

@@ -5,9 +5,9 @@ import { fileURLToPath } from 'node:url';
 // Prints the merchant-facing release notes for a given version on stdout,
 // extracted from the matching changelog entry in readme.txt with the
 // `* Released: <date>` metadata line stripped.
-// Used as semantic-release's `generateNotesCmd` (via @semantic-release/exec) so
-// the GitHub Release body matches the merchant-facing notes already curated in
-// readme.txt during the release-PR step. Single source of truth, no manual edit.
+// Used by the Release workflow (release.yml) to build the GitHub Release body
+// so it matches the merchant-facing notes already curated in readme.txt during
+// the release-PR step. Single source of truth, no manual edit.
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

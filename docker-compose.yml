@@ -31,7 +31,7 @@ services:
       # Local dev bind-mounts the host checkout into the container at
       # wp-content/plugins/sokin-pay. The release-tree normalization step in
       # tests/docker-entrypoint.sh would otherwise rm -rf dev files (.git,
-      # docker-compose.yml, package.json, etc.) directly from the host repo.
+      # docker-compose.yml, etc.) directly from the host repo.
       # Keep this disabled here; the deploy image enables it explicitly.
       SOKIN_NORMALIZE_PLUGIN_TREE: "0"
 

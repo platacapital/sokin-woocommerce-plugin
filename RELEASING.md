@@ -1,6 +1,6 @@
 # Releasing Sokin Pay
 
-The release flow is currently manual end-to-end because the GitHub-Actions automation that opens the release PR is blocked by SRE policy and `semantic-release`'s downstream-trigger limitation. `scripts/release.sh` walks you through it.
+The release flow is currently manual end-to-end because the GitHub-Actions automation that opens the release PR is blocked by SRE policy, and because releases created with the default `GITHUB_TOKEN` do not fire downstream workflow events. `scripts/release.sh` walks you through it.
 
 ```bash
 scripts/release.sh prepare   # opens the release PR
@@ -27,7 +27,7 @@ If anything fails, see the **[Failure modes](#failure-modes)** section.
 4. Cuts a `release/v$VERSION` branch and runs `scripts/bump-wp-version.mjs`, which updates the plugin header `Version`, the `PLATASOKIN_VERSION` constant, and prepends a new `= $VERSION =` block to the `readme.txt` changelog.
 5. Shows the diff, asks for confirmation, then commits with the gating subject `chore(release): v$VERSION`, pushes, and opens the PR.
 
-The merchant-facing notes you wrote in step 3 become both the WordPress.org changelog entry and (after the Release workflow runs) the GitHub Release body, via `scripts/extract-readme-notes.mjs` wired into `.releaserc.json`. No manual editing of the GitHub Release is required.
+The merchant-facing notes you wrote in step 3 become both the WordPress.org changelog entry and (after the Release workflow runs) the GitHub Release body, via `scripts/extract-readme-notes.mjs`, which the Release workflow runs to build the release body. No manual editing of the GitHub Release is required.
 
 ### Merge
 
@@ -39,11 +39,11 @@ After merge, watch the `Release` workflow:
 gh run watch -R platacapital/sokin-woocommerce-plugin
 ```
 
-It runs `semantic-release`, which creates the `v$VERSION` tag and the GitHub Release.
+It reads the version from the `sokin-pay.php` header, builds the notes from the matching `readme.txt` changelog entry, and creates the `v$VERSION` tag and GitHub Release with `gh`. The job is idempotent: if the release already exists it exits without doing anything.
 
 ### `publish`
 
-Releases created by `semantic-release` use the default `GITHUB_TOKEN`. GitHub deliberately suppresses downstream workflow runs for events created by that token, so `deploy-wporg.yml` and `deploy-release.yaml` do not auto-fire. `scripts/release.sh publish v$VERSION` triggers both manually using `gh workflow run`. They build the dist zip, attach it to the GitHub Release, push to `plugins.svn.wordpress.org`, and redeploy `demo.wordpress.sokin.com`.
+The Release workflow creates the release with the default `GITHUB_TOKEN`. GitHub deliberately suppresses downstream workflow runs for events created by that token, so `deploy-wporg.yml` and `deploy-release.yaml` do not auto-fire. `scripts/release.sh publish v$VERSION` triggers both manually using `gh workflow run`. They build the dist zip, attach it to the GitHub Release, push to `plugins.svn.wordpress.org`, and redeploy `demo.wordpress.sokin.com`.
 
 ## Initial WordPress.org submission
 
@@ -73,10 +73,10 @@ Submit the zip at https://wordpress.org/plugins/developers/add/. Once approved, 
 
 **`Deploy Release Demo` hangs at `Deploy via SSH`.** The EC2 host is unhealthy — out of memory, docker daemon stuck, or a previous compose run holding a lock. SSH in, inspect (`docker ps`, `docker info`, `free -m`, `df -h`), recover, and re-trigger.
 
-**Plugin Check / WP.org review flags dev files in the zip** (`pnpm-lock.yaml`, `CONTRIBUTING.md`, etc.). Tighten `.distignore` and rebuild the local zip before resubmitting.
+**Plugin Check / WP.org review flags dev files in the zip** (`CONTRIBUTING.md`, `docker-compose.yml`, etc.). Tighten `.distignore` and rebuild the local zip before resubmitting.
 
 ## Future automation
 
-When the org issues a GitHub App token (or PAT) for releases, set it as `GITHUB_TOKEN` for the `npx semantic-release` step in `release.yml`. Releases created by an App or PAT do fire downstream `release` events, which makes the `publish` step automatic. The script stays as a recovery path.
+When the org issues a GitHub App token (or PAT) for releases, set it as the token for the "Create tag and GitHub Release" step in `release.yml` (replace `secrets.GITHUB_TOKEN` with the App/PAT secret). Releases created by an App or PAT do fire downstream `release` events, which makes the `publish` step automatic. The script stays as a recovery path.
 
 `prepare-release-pr.yml` is also kept up to date with the script: when SRE allows the bot to open PRs, dispatching the workflow will produce the same release PR (same `chore(release): v…` subject, same bullet-list commit body) the script produces locally. Until then, the script is the canonical entry point.
