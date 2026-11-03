@@ -35,7 +35,7 @@ The image defaults to WordPress 7.1.4, PHP 8.5, WP-CLI 2.12.0, and WooCommerce 1
 
 PR deployments use the Dockerfile defaults. Release/demo deployments explicitly pass build arguments, with matching defaults in `.github/workflows/deploy-release.yaml`. Manual release deployments can override those versions. Both workflows pull the base image before building. For local rebuilds, run `docker compose build --pull wordpress`.
 
-Deploying a previously published ECR image only pulls that image. It does not rebuild or patch PHP. Release builds check out the requested plugin tag, so older tags also use the older Dockerfile and do not gain the runtime check added here. Rebuild through the updated workflow with patched version inputs, and verify `php -v` in the resulting container before restoring the demo.
+Deploying a previously published ECR image only pulls that image. It does not rebuild or patch PHP. Existing WordPress volumes also retain their core files and installed plugins when a container is recreated. Update WordPress core and WooCommerce explicitly when reusing a volume; the entrypoint installs WooCommerce only if it is absent. Release builds check out the requested plugin tag, so older tags also use the older Dockerfile and do not gain the runtime check added here. Rebuild through the updated workflow with patched version inputs, and verify `php -v` in the resulting container before restoring the demo.
 
 **Prerequisites:**
 - Docker and Docker Compose installed.
