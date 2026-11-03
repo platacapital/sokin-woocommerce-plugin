@@ -31,6 +31,12 @@ This plugin enables WooCommerce stores to accept payments through Sokin Pay, pro
 
 A root `docker-compose.yml` spins up WordPress, MariaDB, and Nginx. TLS uses `local-dev/nginx.conf` and certificate files you place in `local-dev/certs/` (those cert files are not committed).
 
+The image defaults to WordPress 7.1.4, PHP 8.5, WP-CLI 2.12.0, and WooCommerce 11.2.1. WordPress image tags select a PHP minor version, not a specific PHP patch. The Dockerfile checks the bundled PHP version and rejects runtimes below the PHP2Shell fixes: 8.2.35, 8.3.36, 8.4.27, or 8.5.12. It also rejects unrecognized PHP branches until their minimum is reviewed.
+
+PR deployments use the Dockerfile defaults. Release/demo deployments explicitly pass build arguments, with matching defaults in `.github/workflows/deploy-release.yaml`. Manual release deployments can override those versions. Both workflows pull the base image before building. For local rebuilds, run `docker compose build --pull wordpress`.
+
+Deploying a previously published ECR image only pulls that image. It does not rebuild or patch PHP. Existing WordPress volumes also retain their core files and installed plugins when a container is recreated. Update WordPress core and WooCommerce explicitly when reusing a volume; the entrypoint installs WooCommerce only if it is absent. Release builds check out the requested plugin tag, so older tags also use the older Dockerfile and do not gain the runtime check added here. Rebuild through the updated workflow with patched version inputs, and verify `php -v` in the resulting container before restoring the demo.
+
 **Prerequisites:**
 - Docker and Docker Compose installed.
 - A tool to generate local SSL certificates (`mkcert` recommended).

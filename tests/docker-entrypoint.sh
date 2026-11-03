@@ -58,7 +58,7 @@ fi
 
 # --- 5. Install & Activate Plugins ---
 if ! wp plugin is-installed woocommerce; then
-    wp plugin install woocommerce --version="${WOOCOMMERCE_VERSION:-9.9.5}" --activate
+    wp plugin install woocommerce --version="${WOOCOMMERCE_VERSION:-11.2.1}" --activate
 fi
 
 if ! wp plugin is-active sokin-pay; then
