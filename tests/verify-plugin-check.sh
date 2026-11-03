@@ -20,6 +20,12 @@ docker exec "$container" wp plugin get plugin-check --field=version
 
 mkdir "$staging/sokin-pay"
 rsync -rc --exclude-from="$repo_root/.distignore" "$repo_root/" "$staging/sokin-pay/"
+
+# The submission form rejects this field even if Plugin Check accepts it.
+if sed -n '1,/^[[:space:]]*\*\//p' "$staging/sokin-pay/sokin-pay.php" | grep -Eiq '^[[:space:]]*\*[[:space:]]*Tested up to:'; then
+  echo 'Remove "Tested up to" from the PHP plugin header; keep it only in readme.txt.' >&2
+  exit 1
+fi
 # Runtime checks require the tested plugin to be installed and active. A
 # separate container mounts the release files over that plugin's directory.
 docker exec "$container" wp plugin is-active sokin-pay

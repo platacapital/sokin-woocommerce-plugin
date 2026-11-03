@@ -343,6 +343,7 @@ function platasokin_init_gateway_class() {
 					'title'       => __( 'Title', 'sokin-pay' ),
 					'type'        => 'text',
 					'description' => __( 'Payment title that the customer will see on your checkout.', 'sokin-pay' ),
+					'default'     => __( 'Sokin Pay', 'sokin-pay' ),
 					'desc_tip'    => true,
 				),
 				'description'             => array(
@@ -352,18 +353,56 @@ function platasokin_init_gateway_class() {
 					'desc_tip'    => true,
 				),
 				'platasokin_redirect_url' => array(
-					'title' => __( 'Checkout URL', 'sokin-pay' ),
-					'type'  => 'text',
+					'title'             => __( 'Checkout URL', 'sokin-pay' ),
+					'type'              => 'url',
+					'default'           => 'https://pay.sokin.com/sokinpay/customerPay',
+					'description'       => __( 'HTTPS hosted-checkout URL supplied by Sokin. Use the same environment as your API URL and API key.', 'sokin-pay' ),
+					'sanitize_callback' => array( $this, 'validate_service_url' ),
 				),
 				'platasokin_x_api_key'    => array(
-					'title' => __( 'X API Key', 'sokin-pay' ),
-					'type'  => 'text',
+					'title'             => __( 'X API Key', 'sokin-pay' ),
+					'type'              => 'password',
+					'description'       => __( 'From Settings > Sokin Checkout API Configuration in your Sokin customer portal.', 'sokin-pay' ),
+					'custom_attributes' => array( 'autocomplete' => 'new-password' ),
 				),
 				'platasokin_api_url'      => array(
-					'title' => __( 'API URL', 'sokin-pay' ),
-					'type'  => 'text',
+					'title'             => __( 'API URL', 'sokin-pay' ),
+					'type'              => 'url',
+					'default'           => 'https://payment-gateway.sokin.com/api/services/v1',
+					'description'       => __( 'HTTPS API base URL supplied by Sokin, ending in /api/services/v1. Do not append /orders or /refunds.', 'sokin-pay' ),
+					'sanitize_callback' => array( $this, 'validate_service_url' ),
 				),
 			);
+		}
+
+		/**
+		 * Validate merchant-configured service URLs before saving settings.
+		 *
+		 * @param string|null $value Submitted URL.
+		 * @return string
+		 * @throws Exception When the URL is invalid or does not use HTTPS.
+		 */
+		public function validate_service_url( $value ) {
+			if ( ! is_string( $value ) && ! is_null( $value ) ) {
+				throw new Exception( esc_html__( 'Enter a valid HTTPS service URL.', 'sokin-pay' ) );
+			}
+
+			$value = is_null( $value ) ? '' : trim( wp_unslash( $value ) );
+			if ( '' === $value ) {
+				return '';
+			}
+
+			$parts = wp_parse_url( $value );
+			if ( ! is_array( $parts ) ||
+				'https' !== strtolower( $parts['scheme'] ?? '' ) ||
+				! filter_var( $value, FILTER_VALIDATE_URL ) ||
+				isset( $parts['user'] ) || isset( $parts['pass'] ) ||
+				isset( $parts['query'] ) || isset( $parts['fragment'] )
+			) {
+				throw new Exception( esc_html__( 'Enter a valid HTTPS service URL without credentials, query parameters, or fragments.', 'sokin-pay' ) );
+			}
+
+			return untrailingslashit( esc_url_raw( $value, array( 'https' ) ) );
 		}
 
 		public function payment_fields() {
