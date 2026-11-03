@@ -39,6 +39,7 @@ function platasokin_create_refund( $refund_id, $args ) {
 				'x-api-key'    => $payment_gateway->settings['platasokin_x_api_key'],
 				'Content-Type' => 'application/json',
 			),
+			'timeout' => 30,
 		);
 
 		$order_request_url = $payment_gateway->platasokin_api_url . '/orders/' . $order->get_meta( 'orderId' );
@@ -70,6 +71,7 @@ function platasokin_create_refund( $refund_id, $args ) {
 				'Content-Type' => 'application/json',
 			),
 			'body'    => wp_json_encode( $body ),
+			'timeout' => 30,
 		);
 
 		$response = wp_remote_post( $payment_gateway->platasokin_api_url . '/refunds', $header_args );
@@ -192,6 +194,7 @@ function platasokin_thankyou_handler( $order_id ) {
 				'x-api-key'    => $payment_gateway->settings['platasokin_x_api_key'],
 				'Content-Type' => 'application/json',
 			),
+			'timeout' => 30,
 		);
 
 		$url     = $payment_gateway->platasokin_api_url . '/orders/' . $sokin_order_id;
@@ -757,6 +760,7 @@ function platasokin_init_gateway_class() {
 					'Content-Type' => 'application/json',
 				),
 				'body'    => wp_json_encode( $body ),
+				'timeout' => 30,
 			);
 
 			$response     = wp_remote_post( $this->settings['platasokin_api_url'] . '/orders', $args );

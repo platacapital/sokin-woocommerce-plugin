@@ -73,6 +73,8 @@ Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and 
 == Changelog ==
 
 = 1.1.5 =
+* Released: 2026-11-03
+* Version bump.
 * Released: 2026-06-22
 * Fixed an issue where an order could be incorrectly marked as received after a failed or declined payment (for example, Alipay refusals). Failed and declined payments are now correctly marked as failed and the customer is returned to the payment page to try again.
 
