@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action( 'woocommerce_refund_created', 'platasokin_create_refund', 10, 2 );
 
 /**
- * Refund handler for Sokin Pay orders.
+ * Refund handler for Sokin Checkout orders.
  *
  * @param int   $refund_id Refund post ID.
  * @param array $args      Refund arguments including amount and reason.
@@ -127,13 +127,13 @@ function platasokin_gateway_log_warning( $message, $context = array() ) {
 		$safe_context['get_order_id'] = $context['get_order_id'];
 	}
 	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-	error_log( 'Sokin Pay WARNING: ' . $message . ' ' . wp_json_encode( $safe_context ) );
+	error_log( 'Sokin Checkout WARNING: ' . $message . ' ' . wp_json_encode( $safe_context ) );
 }
 
 add_action( 'woocommerce_thankyou', 'platasokin_thankyou_handler', 10, 1 );
 
 /**
- * Thank-you page handler for Sokin Pay orders.
+ * Thank-you page handler for Sokin Checkout orders.
  *
  * @param int $order_id WooCommerce order ID.
  */
@@ -148,7 +148,7 @@ function platasokin_thankyou_handler( $order_id ) {
 		$order_customer_id = $order->get_customer_id();
 		if ( $order_customer_id !== $current_user_id ) {
 			platasokin_gateway_log_warning(
-				'Sokin Pay: Unauthorized order access attempt',
+				'Sokin Checkout: Unauthorized order access attempt',
 				array(
 					'source'            => 'platasokin-gateway',
 					'order_id'          => $order_id,
@@ -163,9 +163,9 @@ function platasokin_thankyou_handler( $order_id ) {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$status = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
 	if ( 'return' === $status ) {
-		$order->update_status( 'pending', __( 'Customer returned from Sokin without paying.', 'sokin-pay' ) );
+		$order->update_status( 'pending', __( 'Customer returned from Sokin without paying.', 'sokin-checkout' ) );
 		$order->save();
-		wc_add_notice( __( 'You cancelled the payment. Please try again.', 'sokin-pay' ), 'notice' );
+		wc_add_notice( __( 'You cancelled the payment. Please try again.', 'sokin-checkout' ), 'notice' );
 		wp_safe_redirect( $order->get_checkout_payment_url() );
 		exit;
 	}
@@ -179,7 +179,7 @@ function platasokin_thankyou_handler( $order_id ) {
 		$gateways           = $payment_gateways->payment_gateways();
 		if ( ! isset( $gateways[ $payment_gateway_id ] ) ) {
 			platasokin_gateway_log_warning(
-				'Sokin Pay: payment gateway not found',
+				'Sokin Checkout: payment gateway not found',
 				array(
 					'source'             => 'platasokin-gateway',
 					'payment_gateway_id' => $payment_gateway_id,
@@ -210,9 +210,9 @@ function platasokin_thankyou_handler( $order_id ) {
 				$failed_payment_statuses = array( 'declined', 'failed' );
 				$is_payment_failed       = in_array( $payment_status, $failed_payment_statuses, true );
 				if ( $is_payment_failed ) {
-					$order->update_status( 'failed', __( 'Payment declined by Sokin.', 'sokin-pay' ) );
+					$order->update_status( 'failed', __( 'Payment declined by Sokin.', 'sokin-checkout' ) );
 					$order->save();
-					wc_add_notice( __( 'Your payment was declined. Please try again or choose a different payment method.', 'sokin-pay' ), 'error' );
+					wc_add_notice( __( 'Your payment was declined. Please try again or choose a different payment method.', 'sokin-checkout' ), 'error' );
 					wp_safe_redirect( $order->get_checkout_payment_url() );
 					exit;
 				} elseif ( 'PROCESSED' === $order_status ||
@@ -227,7 +227,7 @@ function platasokin_thankyou_handler( $order_id ) {
 		}
 	} else {
 		platasokin_gateway_log_warning(
-			'Sokin Pay: Sokin order id empty',
+			'Sokin Checkout: Sokin order id empty',
 			array(
 				'source'   => 'platasokin-gateway',
 				'order_id' => $order_id,
@@ -258,7 +258,7 @@ function platasokin_init_gateway_class() {
 	}
 
 	/**
-	 * Sokin Pay WooCommerce gateway.
+	 * Sokin Checkout WooCommerce gateway.
 	 */
 	class Platasokin_WC_Gateway extends WC_Payment_Gateway {
 
@@ -283,7 +283,7 @@ function platasokin_init_gateway_class() {
 			$this->id                 = 'sokinpay_gateway';
 			$this->icon               = plugin_dir_url( __FILE__ ) . '../assets/images/payment_methods.svg';
 			$this->has_fields         = true;
-			$this->method_title       = 'Sokin Pay';
+			$this->method_title       = 'Sokin Checkout';
 			$this->method_description = 'Enable a variety of secure payment options, including credit cards and pay by bank.';
 
 			$this->init_form_fields();
@@ -334,36 +334,75 @@ function platasokin_init_gateway_class() {
 		public function init_form_fields() {
 			$this->form_fields = array(
 				'enabled'                 => array(
-					'title'   => __( 'Enable/Disable', 'sokin-pay' ),
+					'title'   => __( 'Enable/Disable', 'sokin-checkout' ),
 					'type'    => 'checkbox',
-					'label'   => __( 'Enable Sokin Pay', 'sokin-pay' ),
+					'label'   => __( 'Enable Sokin Checkout', 'sokin-checkout' ),
 					'default' => 'no',
 				),
 				'title'                   => array(
-					'title'       => __( 'Title', 'sokin-pay' ),
+					'title'       => __( 'Title', 'sokin-checkout' ),
 					'type'        => 'text',
-					'description' => __( 'Payment title that the customer will see on your checkout.', 'sokin-pay' ),
+					'description' => __( 'Payment title that the customer will see on your checkout.', 'sokin-checkout' ),
+					'default'     => __( 'Sokin Checkout', 'sokin-checkout' ),
 					'desc_tip'    => true,
 				),
 				'description'             => array(
-					'title'       => __( 'Description', 'sokin-pay' ),
+					'title'       => __( 'Description', 'sokin-checkout' ),
 					'type'        => 'text',
-					'description' => __( 'Payment description that the customer will see on your checkout.', 'sokin-pay' ),
+					'description' => __( 'Payment description that the customer will see on your checkout.', 'sokin-checkout' ),
 					'desc_tip'    => true,
 				),
 				'platasokin_redirect_url' => array(
-					'title' => __( 'Checkout URL', 'sokin-pay' ),
-					'type'  => 'text',
+					'title'             => __( 'Checkout URL', 'sokin-checkout' ),
+					'type'              => 'url',
+					'default'           => 'https://pay.sokin.com/sokinpay/customerPay',
+					'description'       => __( 'HTTPS hosted-checkout URL supplied by Sokin. Use the same environment as your API URL and API key.', 'sokin-checkout' ),
+					'sanitize_callback' => array( $this, 'validate_service_url' ),
 				),
 				'platasokin_x_api_key'    => array(
-					'title' => __( 'X API Key', 'sokin-pay' ),
-					'type'  => 'text',
+					'title'             => __( 'X API Key', 'sokin-checkout' ),
+					'type'              => 'password',
+					'description'       => __( 'From Settings > Sokin Checkout API Configuration in your Sokin customer portal.', 'sokin-checkout' ),
+					'custom_attributes' => array( 'autocomplete' => 'new-password' ),
 				),
 				'platasokin_api_url'      => array(
-					'title' => __( 'API URL', 'sokin-pay' ),
-					'type'  => 'text',
+					'title'             => __( 'API URL', 'sokin-checkout' ),
+					'type'              => 'url',
+					'default'           => 'https://payment-gateway.sokin.com/api/services/v1',
+					'description'       => __( 'HTTPS API base URL supplied by Sokin, ending in /api/services/v1. Do not append /orders or /refunds.', 'sokin-checkout' ),
+					'sanitize_callback' => array( $this, 'validate_service_url' ),
 				),
 			);
+		}
+
+		/**
+		 * Validate merchant-configured service URLs before saving settings.
+		 *
+		 * @param string|null $value Submitted URL.
+		 * @return string
+		 * @throws Exception When the URL is invalid or does not use HTTPS.
+		 */
+		public function validate_service_url( $value ) {
+			if ( ! is_string( $value ) && ! is_null( $value ) ) {
+				throw new Exception( esc_html__( 'Enter a valid HTTPS service URL.', 'sokin-checkout' ) );
+			}
+
+			$value = is_null( $value ) ? '' : trim( wp_unslash( $value ) );
+			if ( '' === $value ) {
+				return '';
+			}
+
+			$parts = wp_parse_url( $value );
+			if ( ! is_array( $parts ) ||
+				'https' !== strtolower( $parts['scheme'] ?? '' ) ||
+				! filter_var( $value, FILTER_VALIDATE_URL ) ||
+				isset( $parts['user'] ) || isset( $parts['pass'] ) ||
+				isset( $parts['query'] ) || isset( $parts['fragment'] )
+			) {
+				throw new Exception( esc_html__( 'Enter a valid HTTPS service URL without credentials, query parameters, or fragments.', 'sokin-checkout' ) );
+			}
+
+			return untrailingslashit( esc_url_raw( $value, array( 'https' ) ) );
 		}
 
 		public function payment_fields() {
@@ -679,7 +718,7 @@ function platasokin_init_gateway_class() {
 				$status = $order->get_status();
 			}
 
-			$order->update_status( $status, __( 'Checkout with custom payment. ', 'sokin-pay' ) );
+			$order->update_status( $status, __( 'Checkout with custom payment. ', 'sokin-checkout' ) );
 
 			$order->reduce_order_stock();
 

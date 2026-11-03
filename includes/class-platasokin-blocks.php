@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 
 /**
- * Registers Sokin Pay for the Blocks checkout.
+ * Registers Sokin Checkout for the Blocks checkout.
  */
 final class Platasokin_Blocks_Payment_Method extends AbstractPaymentMethodType {
 
@@ -54,7 +54,7 @@ final class Platasokin_Blocks_Payment_Method extends AbstractPaymentMethodType {
 			true
 		);
 		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( 'platasokin_gateway_blocks', 'sokin-pay' );
+			wp_set_script_translations( 'platasokin_gateway_blocks', 'sokin-checkout' );
 		}
 		return array( 'platasokin_gateway_blocks' );
 	}

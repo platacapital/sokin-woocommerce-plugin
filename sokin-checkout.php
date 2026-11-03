@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Sokin Pay
+ * Plugin Name: Sokin Checkout
  * Plugin URI:
  * Description: This plugin seamlessly integrates with your WooCommerce store, providing a secure and efficient way to process payments. Enable a variety of secure payment options, including credit cards and pay by bank.
  * Version: 1.1.6
@@ -8,11 +8,10 @@
  * Author URI:
  * Requires at least: 6.5
  * Requires Plugins: woocommerce
- * Tested up to: 7.1
  * Requires PHP: 7.4
  * License: GPLv2 or later
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: sokin-pay
+ * Text Domain: sokin-checkout
  *
  * @package Platasokin
  */
