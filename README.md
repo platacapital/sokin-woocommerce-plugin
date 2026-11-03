@@ -115,9 +115,17 @@ to the `platasokin_*` hook names above.
 
 ## Testing
 
-There is no PHPUnit suite checked into this repository yet; validation is manual.
+Run the official WordPress Plugin Check against the release files using a running local container:
 
-Before going live:
+```bash
+bash tests/verify-plugin-check.sh sokin-woocommerce-plugin-wordpress-1 /tmp/sokin-plugin-check.txt
+```
+
+The script updates Plugin Check to the latest published version, stages the same files as the release workflow using `.distignore`, and runs static and runtime checks in a temporary container, including experimental and low-severity checks.
+
+Sokin Pay must already be active in the supplied container. Its installed files remain unchanged. It exits unsuccessfully if the checker reports any errors or warnings. Results and diagnostic output are saved to the report path and its `.stderr` companion.
+
+There is no PHPUnit suite checked into this repository yet. Verify payment behavior with sandbox credentials before going live:
 
 - Run through checkout in a **sandbox** Sokin environment (see `SOKIN_API_URL` and related variables in `docker-compose.yml`; override with a root `.env` file if needed).
 - Verify payment flows with Sokin's test cards and credentials from the [Sokin API documentation](https://api-docs.sokin.com).
