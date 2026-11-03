@@ -13,12 +13,12 @@ on:
         description: 'WordPress version'
         required: false
         type: string
-        default: '6.8.1'
+        default: '7.1.4'
       php_version:
         description: 'PHP version'
         required: false
         type: string
-        default: '8.4'
+        default: '8.5'
       wp_cli_version:
         description: 'WP-CLI version'
         required: false
@@ -28,17 +28,17 @@ on:
         description: 'WooCommerce version'
         required: false
         type: string
-        default: '9.9.5'
+        default: '11.2.1'
 
 permissions:
   contents: read
 
 env:
   # Default versions for release deployments
-  WORDPRESS_VERSION: "6.8.1"
-  PHP_VERSION: "8.4"
+  WORDPRESS_VERSION: "7.1.4"
+  PHP_VERSION: "8.5"
   WP_CLI_VERSION: "2.12.0"
-  WOOCOMMERCE_VERSION: "9.9.5"
+  WOOCOMMERCE_VERSION: "11.2.1"
 
 jobs:
   build:
@@ -67,6 +67,7 @@ jobs:
         with:
           context: .
           push: true
+          pull: true
           file: ./tests/Dockerfile
           tags: ${{ secrets.ECR_URL }}:${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
           build-args: |

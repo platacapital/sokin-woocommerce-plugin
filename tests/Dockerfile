@@ -1,10 +1,22 @@
 # Accept build arguments for version management
-ARG WORDPRESS_VERSION=beta-6.9
+ARG WORDPRESS_VERSION=7.1.4
 ARG PHP_VERSION=8.5
 ARG WP_CLI_VERSION=2.12.0
-ARG WOOCOMMERCE_VERSION=10.3.6
+ARG WOOCOMMERCE_VERSION=11.2.1
 
 FROM wordpress:${WORDPRESS_VERSION}-php${PHP_VERSION}-apache
+
+# PHP2Shell fixes: https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w
+# WordPress tags select a PHP minor, so check the actual bundled patch version.
+RUN php -r ' \
+    $minimums = ["8.2" => "8.2.35", "8.3" => "8.3.36", "8.4" => "8.4.27", "8.5" => "8.5.12"]; \
+    $branch = PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION; \
+    if (!isset($minimums[$branch]) || version_compare(PHP_VERSION, $minimums[$branch], "<")) { \
+        fwrite(STDERR, "Unsupported or unpatched PHP runtime: " . PHP_VERSION . PHP_EOL); \
+        exit(1); \
+    } \
+    echo "Patched PHP runtime: " . PHP_VERSION . PHP_EOL; \
+'
 
 # Re-declare ARGs after FROM to use them in this build stage
 ARG WORDPRESS_VERSION
