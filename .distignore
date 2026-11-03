@@ -23,6 +23,7 @@ autom.plan.md
 # Repository documentation that is not the WordPress.org readme
 CONTRIBUTING.md
 README.md
+RELEASING.md
 
 # Build output (prevents rsync self-copy when dist/ is the destination)
 dist/

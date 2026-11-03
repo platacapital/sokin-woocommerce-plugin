@@ -7,7 +7,8 @@
  * Author: Sokin
  * Author URI:
  * Requires at least: 6.5
- * Tested up to: 6.9
+ * Requires Plugins: woocommerce
+ * Tested up to: 7.1
  * Requires PHP: 7.4
  * License: GPLv2 or later
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -34,6 +35,10 @@ function platasokin_activate() {
  * Register front-end stylesheet.
  */
 function platasokin_register_gateway_styles() {
+	if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+		return;
+	}
+
 	wp_register_style(
 		'platasokin_gateway_style',
 		plugin_dir_url( __FILE__ ) . 'assets/css/style.css',
