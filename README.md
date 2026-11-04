@@ -192,13 +192,12 @@ If the automation is unavailable, you can still cut a release manually while let
    This updates `sokin-pay.php`, `readme.txt`, the internal plugin/class/script/style versions, and prepends a `= X.Y.Z =` changelog entry built from the provided or derived notes.
 2. Review the diff, then commit and push the changes to `main` (for example: `chore(release): vX.Y.Z`).
 3. Create a GitHub Release targeting `main`, adding a new `vX.Y.Z` tag and release notes.
-4. If you need a manual zip (e.g. for marketplaces), package the plugin, mirroring `.distignore` exclusions:
+4. If you need a manual zip (e.g. for marketplaces), stage a `dist/` tree through `.distignore` and package that, exactly as the release workflow does:
    ```bash
-   zip -r sokin-woocommerce-plugin-vX.Y.Z.zip . \
-     -x "**/.git*" "**/.DS_Store" "local-dev/*" "tests/*" "wp-content/*" \
-        "docker-compose*" "*.log" "**/docker-entrypoint.sh" "scripts/*" \
-        ".distignore"
+   rsync -rc --delete --exclude-from=.distignore ./ ./dist/
+   (cd dist && zip -r "../sokin-woocommerce-plugin-vX.Y.Z.zip" . -x '*.DS_Store')
    ```
+   Staging through `.distignore` is what keeps development-only files such as `vendor/` out of the archive; a hand-maintained `zip -x` list drifts as soon as `.distignore` changes.
 5. Upload the archive wherever needed (for example, to a marketplace that does not consume the GitHub Release directly).
 
 #### GitHub secrets

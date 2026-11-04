@@ -152,3 +152,7 @@ vendor/
 # PHPUnit
 .phpunit.result.cache
 phpunit.xml
+
+# Release packaging output
+dist/
+/*.zip
