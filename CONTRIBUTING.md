@@ -63,7 +63,7 @@ There are several ways you can contribute to this project:
    - Node.js is only needed if you run the release scripts in `scripts/` (e.g. `scripts/bump-wp-version.mjs`). They use the Node standard library only — there are no dependencies to install.
 
 4. **Testing locally**:
-   - Use sandbox credentials and the checklist in the **Testing** section of `README.md`.
+   - Follow the **Testing** section of `README.md`: `tests/run-phpunit.sh` for the unit suite, then sandbox credentials for a real checkout.
 
 ### Questions?
 

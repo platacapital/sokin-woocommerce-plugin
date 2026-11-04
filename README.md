@@ -125,7 +125,25 @@ The script updates Plugin Check to the latest published version, stages the same
 
 Sokin Pay must already be active in the supplied container. Its installed files remain unchanged. It exits unsuccessfully if the checker reports any errors or warnings. Results and diagnostic output are saved to the report path and its `.stderr` companion.
 
-There is no PHPUnit suite checked into this repository yet. Verify payment behavior with sandbox credentials before going live:
+### Unit tests
+
+The PHPUnit suite in `tests/phpunit/` covers the thank-you handler and the gateway logger. It runs without a WordPress install: the WordPress and WooCommerce functions it needs are doubled in `tests/phpunit/includes/`.
+
+```bash
+tests/run-phpunit.sh
+```
+
+The script installs Composer dependencies on first run. It uses a local `php` and `composer` when both are on `PATH`, and otherwise runs the suite in Docker. Extra arguments are passed through to PHPUnit:
+
+```bash
+tests/run-phpunit.sh --testdox --filter refused
+```
+
+Set `SOKIN_PHP_IMAGE` or `SOKIN_COMPOSER_IMAGE` to override the fallback images (`php:8.3-cli` and `composer:2`). With a local toolchain, `composer install && composer test` is equivalent.
+
+### Sandbox checkout
+
+Verify payment behavior with sandbox credentials before going live:
 
 - Run through checkout in a **sandbox** Sokin environment (see `SOKIN_API_URL` and related variables in `docker-compose.yml`; override with a root `.env` file if needed).
 - Verify payment flows with Sokin's test cards and credentials from the [Sokin API documentation](https://api-docs.sokin.com).
