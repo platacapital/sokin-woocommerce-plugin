@@ -147,3 +147,12 @@ wp-config.php
 
 # Dependency directories
 node_modules/
+vendor/
+
+# PHPUnit
+.phpunit.result.cache
+phpunit.xml
+
+# Release packaging output
+dist/
+/*.zip

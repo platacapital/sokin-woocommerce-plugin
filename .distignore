@@ -19,6 +19,12 @@
 .distignore
 scripts/
 autom.plan.md
+composer.json
+composer.lock
+phpunit.xml.dist
+phpunit.xml
+.phpunit.result.cache
+vendor/
 
 # Repository documentation that is not the WordPress.org readme
 CONTRIBUTING.md

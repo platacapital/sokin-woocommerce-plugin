@@ -125,7 +125,25 @@ The script updates Plugin Check to the latest published version, stages the same
 
 Sokin Pay must already be active in the supplied container. Its installed files remain unchanged. It exits unsuccessfully if the checker reports any errors or warnings. Results and diagnostic output are saved to the report path and its `.stderr` companion.
 
-There is no PHPUnit suite checked into this repository yet. Verify payment behavior with sandbox credentials before going live:
+### Unit tests
+
+The PHPUnit suite in `tests/phpunit/` covers the thank-you handler and the gateway logger. It runs without a WordPress install: the WordPress and WooCommerce functions it needs are doubled in `tests/phpunit/includes/`.
+
+```bash
+tests/run-phpunit.sh
+```
+
+The script installs Composer dependencies on first run. It uses a local `php` and `composer` when both are on `PATH`, and otherwise runs the suite in Docker. Extra arguments are passed through to PHPUnit:
+
+```bash
+tests/run-phpunit.sh --testdox --filter refused
+```
+
+Set `SOKIN_PHP_IMAGE` or `SOKIN_COMPOSER_IMAGE` to override the fallback images (`php:8.3-cli` and `composer:2`). With a local toolchain, `composer install && composer test` is equivalent.
+
+### Sandbox checkout
+
+Verify payment behavior with sandbox credentials before going live:
 
 - Run through checkout in a **sandbox** Sokin environment (see `SOKIN_API_URL` and related variables in `docker-compose.yml`; override with a root `.env` file if needed).
 - Verify payment flows with Sokin's test cards and credentials from the [Sokin API documentation](https://api-docs.sokin.com).
@@ -174,13 +192,12 @@ If the automation is unavailable, you can still cut a release manually while let
    This updates `sokin-pay.php`, `readme.txt`, the internal plugin/class/script/style versions, and prepends a `= X.Y.Z =` changelog entry built from the provided or derived notes.
 2. Review the diff, then commit and push the changes to `main` (for example: `chore(release): vX.Y.Z`).
 3. Create a GitHub Release targeting `main`, adding a new `vX.Y.Z` tag and release notes.
-4. If you need a manual zip (e.g. for marketplaces), package the plugin, mirroring `.distignore` exclusions:
+4. If you need a manual zip (e.g. for marketplaces), stage a `dist/` tree through `.distignore` and package that, exactly as the release workflow does:
    ```bash
-   zip -r sokin-woocommerce-plugin-vX.Y.Z.zip . \
-     -x "**/.git*" "**/.DS_Store" "local-dev/*" "tests/*" "wp-content/*" \
-        "docker-compose*" "*.log" "**/docker-entrypoint.sh" "scripts/*" \
-        ".distignore"
+   rsync -rc --delete --exclude-from=.distignore ./ ./dist/
+   (cd dist && zip -r "../sokin-woocommerce-plugin-vX.Y.Z.zip" . -x '*.DS_Store')
    ```
+   Staging through `.distignore` is what keeps development-only files such as `vendor/` out of the archive; a hand-maintained `zip -x` list drifts as soon as `.distignore` changes.
 5. Upload the archive wherever needed (for example, to a marketplace that does not consume the GitHub Release directly).
 
 #### GitHub secrets
