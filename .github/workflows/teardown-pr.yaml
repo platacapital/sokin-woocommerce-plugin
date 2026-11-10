@@ -21,7 +21,11 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
             cd ~/deployments-wordpress/pr-${{ github.event.number }}
+            if [ -f manage-wp-cron.sh ]; then
+              bash manage-wp-cron.sh remove
+            fi
             docker-compose -p pr-${{ github.event.number }} down
             cd ..
             rm -rf pr-${{ github.event.number }}

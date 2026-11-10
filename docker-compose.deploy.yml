@@ -18,6 +18,8 @@ services:
       # image is safe and matches the release ZIP layout. Local docker-compose
       # bind-mounts the host repo and must NOT enable this.
       SOKIN_NORMALIZE_PLUGIN_TREE: "1"
+      # Deployment installs a host cron job to run wp-cron.php every minute.
+      SOKIN_DISABLE_WP_CRON: "1"
     depends_on:
       - db
     restart: unless-stopped

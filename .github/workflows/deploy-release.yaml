@@ -85,12 +85,13 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
 
-      - name: Read docker-compose.deploy.yml
+      - name: Read deployment files
         id: compose_file
         uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
+            core.setOutput('host_cron', fs.readFileSync('scripts/manage-wp-cron.sh', 'utf8'));
             const content = fs.readFileSync('docker-compose.deploy.yml', 'utf8');
             return content;
           result-encoding: string
@@ -102,6 +103,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
             cd ~/deployments-wordpress
             mkdir -p demo
             cd demo
@@ -123,4 +125,11 @@ jobs:
             cat > docker-compose.yml <<'EOF'
             ${{ steps.compose_file.outputs.result }}
             EOF
-            docker-compose down || true && docker-compose pull && docker-compose up -d --force-recreate
+            cat > manage-wp-cron.sh.tmp <<'SOKIN_CRON_SCRIPT'
+            ${{ steps.compose_file.outputs.host_cron }}
+            SOKIN_CRON_SCRIPT
+            mv manage-wp-cron.sh.tmp manage-wp-cron.sh
+            bash manage-wp-cron.sh install
+            docker-compose down || true
+            docker-compose pull
+            docker-compose up -d --force-recreate
