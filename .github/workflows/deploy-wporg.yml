@@ -22,7 +22,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false }}
     runs-on: ubuntu-latest
     env:
-      PLUGIN_SLUG: sokin-pay
+      PLUGIN_SLUG: sokin-checkout
     steps:
       - name: Resolve release tag and body
         id: release

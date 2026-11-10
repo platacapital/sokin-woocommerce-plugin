@@ -61,12 +61,18 @@ if ! wp plugin is-installed woocommerce; then
     wp plugin install woocommerce --version="${WOOCOMMERCE_VERSION:-11.2.1}" --activate
 fi
 
-if ! wp plugin is-active sokin-pay; then
-    wp plugin activate sokin-pay
+# The previous manual-install slug uses the same gateway code and settings.
+# Deactivate it before loading the renamed plugin to avoid duplicate functions.
+if wp plugin is-active sokin-pay; then
+    wp plugin deactivate sokin-pay
+fi
+
+if ! wp plugin is-active sokin-checkout; then
+    wp plugin activate sokin-checkout
 fi
 
 # --- 6. Normalize plugin tree to match release ZIP ---
-PLUGIN_DIR="/var/www/html/wp-content/plugins/sokin-pay"
+PLUGIN_DIR="/var/www/html/wp-content/plugins/sokin-checkout"
 
 # This step is destructive: it deletes development-only files from the plugin
 # directory so the running site mirrors what ships in the release archive.
@@ -99,7 +105,7 @@ else
     echo "Skipping release-tree normalization (SOKIN_NORMALIZE_PLUGIN_TREE!=1); preserving plugin directory as-is."
 fi
 
-# Remove legacy files from pre-sokin-pay builds so Plugin Check scans only the
+# Remove legacy files from pre-sokin-checkout builds so Plugin Check scans only the
 # current plugin tree in reused dev/test environments.
 LEGACY_PLUGIN_FILES=(
     "$PLUGIN_DIR/includes/class_woo_cpay_loader.php"
@@ -125,7 +131,7 @@ fi
 
 # --- 7. Configure Options ---
 # With plugins active, we can now fetch metadata and set final options.
-PLUGIN_VERSION=$(wp eval 'echo get_plugin_data(WP_PLUGIN_DIR . "/sokin-pay/sokin-pay.php")["Version"];' 2>/dev/null || echo "Unknown")
+PLUGIN_VERSION=$(wp eval 'echo get_plugin_data(WP_PLUGIN_DIR . "/sokin-checkout/sokin-checkout.php")["Version"];' 2>/dev/null || echo "Unknown")
 
 # Dynamically set final site title based on VIRTUAL_HOST.
 if [[ "$VIRTUAL_HOST" == *pr-* ]]; then

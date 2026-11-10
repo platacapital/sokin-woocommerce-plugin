@@ -35,18 +35,18 @@ await updateReadme(newVersion, releaseNotes);
 console.log(`Prepared WordPress assets for v${newVersion}`);
 
 async function updatePluginVersion(version) {
-  const pluginFile = path.join(projectRoot, 'sokin-pay.php');
+  const pluginFile = path.join(projectRoot, 'sokin-checkout.php');
   let contents = await readFile(pluginFile, 'utf8');
 
   const headerRegex = /(\*\s*Version:\s*)([^\r\n]+)/;
   if (!headerRegex.test(contents)) {
-    throw new Error('Unable to locate plugin header Version field in sokin-pay.php');
+    throw new Error('Unable to locate plugin header Version field in sokin-checkout.php');
   }
   contents = contents.replace(headerRegex, `$1${version}`);
 
   const constantRegex = /(define\(\s*'PLATASOKIN_VERSION',\s*')[^']+('\s*\)\s*;)/;
   if (!constantRegex.test(contents)) {
-    throw new Error('Unable to locate PLATASOKIN_VERSION constant in sokin-pay.php');
+    throw new Error('Unable to locate PLATASOKIN_VERSION constant in sokin-checkout.php');
   }
   contents = contents.replace(constantRegex, `$1${version}$2`);
 

@@ -1,0 +1,108 @@
+# Copyright (C) 2026 Sokin
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Sokin Checkout 1.1.6\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/sokin-checkout\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-03T13:17:08+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: sokin-checkout\n"
+
+#. Plugin Name of the plugin
+#: sokin-checkout.php
+#: includes/class-platasokin-wc-gateway.php:346
+#: includes/checkout.js:2
+msgid "Sokin Checkout"
+msgstr ""
+
+#. Description of the plugin
+#: sokin-checkout.php
+msgid "This plugin seamlessly integrates with your WooCommerce store, providing a secure and efficient way to process payments. Enable a variety of secure payment options, including credit cards and pay by bank."
+msgstr ""
+
+#. Author of the plugin
+#: sokin-checkout.php
+msgid "Sokin"
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:166
+msgid "Customer returned from Sokin without paying."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:168
+msgid "You cancelled the payment. Please try again."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:213
+msgid "Payment declined by Sokin."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:215
+msgid "Your payment was declined. Please try again or choose a different payment method."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:337
+msgid "Enable/Disable"
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:339
+msgid "Enable Sokin Checkout"
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:343
+msgid "Title"
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:345
+msgid "Payment title that the customer will see on your checkout."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:350
+msgid "Description"
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:352
+msgid "Payment description that the customer will see on your checkout."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:356
+msgid "Checkout URL"
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:359
+msgid "HTTPS hosted-checkout URL supplied by Sokin. Use the same environment as your API URL and API key."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:363
+msgid "X API Key"
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:365
+msgid "From Settings > Sokin Checkout API Configuration in your Sokin customer portal."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:369
+msgid "API URL"
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:372
+msgid "HTTPS API base URL supplied by Sokin, ending in /api/services/v1. Do not append /orders or /refunds."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:387
+msgid "Enter a valid HTTPS service URL."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:402
+msgid "Enter a valid HTTPS service URL without credentials, query parameters, or fragments."
+msgstr ""
+
+#: includes/class-platasokin-wc-gateway.php:721
+msgid "Checkout with custom payment. "
+msgstr ""

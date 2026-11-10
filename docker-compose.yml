@@ -9,7 +9,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - .:/var/www/html/wp-content/plugins/sokin-pay
+      - .:/var/www/html/wp-content/plugins/sokin-checkout
       - ./wp-content/uploads:/var/www/html/wp-content/uploads
     environment:
       # WordPress Database
@@ -29,7 +29,7 @@ services:
       SOKIN_API_URL: ${SOKIN_API_URL:-https://api.sandbox.sokin.net/api/services/v1}
 
       # Local dev bind-mounts the host checkout into the container at
-      # wp-content/plugins/sokin-pay. The release-tree normalization step in
+      # wp-content/plugins/sokin-checkout. The release-tree normalization step in
       # tests/docker-entrypoint.sh would otherwise rm -rf dev files (.git,
       # docker-compose.yml, etc.) directly from the host repo.
       # Keep this disabled here; the deploy image enables it explicitly.

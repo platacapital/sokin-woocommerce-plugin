@@ -18,20 +18,26 @@ else
 fi
 docker exec "$container" wp plugin get plugin-check --field=version
 
-mkdir "$staging/sokin-pay"
-rsync -rc --exclude-from="$repo_root/.distignore" "$repo_root/" "$staging/sokin-pay/"
+mkdir "$staging/sokin-checkout"
+rsync -rc --exclude-from="$repo_root/.distignore" "$repo_root/" "$staging/sokin-checkout/"
+
+# The submission form rejects this field even if Plugin Check accepts it.
+if sed -n '1,/^[[:space:]]*\*\//p' "$staging/sokin-checkout/sokin-checkout.php" | grep -Eiq '^[[:space:]]*\*[[:space:]]*Tested up to:'; then
+  echo 'Remove "Tested up to" from the PHP plugin header; keep it only in readme.txt.' >&2
+  exit 1
+fi
 # Runtime checks require the tested plugin to be installed and active. A
 # separate container mounts the release files over that plugin's directory.
-docker exec "$container" wp plugin is-active sokin-pay
+docker exec "$container" wp plugin is-active sokin-checkout
 plugins_dir="$(docker exec "$container" wp eval 'echo WP_PLUGIN_DIR;')"
 image="$(docker inspect --format '{{.Config.Image}}' "$container")"
 network="$(docker inspect --format '{{range $name, $network := .NetworkSettings.Networks}}{{$name}}{{"\n"}}{{end}}' "$container" | head -n 1)"
 checker_cli="$plugins_dir/plugin-check/cli.php"
 check_status=0
 docker run --rm --volumes-from "$container" --network "$network" \
-  --mount "type=bind,source=$staging/sokin-pay,target=$plugins_dir/sokin-pay,readonly" \
-  --entrypoint wp "$image" plugin check sokin-pay \
-  --slug=sokin-pay \
+  --mount "type=bind,source=$staging/sokin-checkout,target=$plugins_dir/sokin-checkout,readonly" \
+  --entrypoint wp "$image" plugin check sokin-checkout \
+  --slug=sokin-checkout \
   --require="$checker_cli" \
   --format=strict-json \
   --include-experimental \

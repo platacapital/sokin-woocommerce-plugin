@@ -1,4 +1,4 @@
-=== Sokin Pay ===
+=== Sokin Checkout ===
 Contributors: platasokin
 Version: 1.1.6
 Tags: woocommerce, payments, payment gateway, credit card, ecommerce
@@ -9,7 +9,7 @@ Stable tag: 1.1.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Easily accept payments on your WordPress site via Sokin Pay payment gateway.
+Easily accept payments on your WordPress site via Sokin Checkout payment gateway.
 
 == Description ==
 This plugin seamlessly integrates with your WooCommerce store, providing a secure and efficient way to process payments. Enable a variety of secure payment options, including credit cards and pay by bank.
@@ -18,57 +18,64 @@ Register your business account at [sokin.com](https://sokin.com/business/busines
 Sokin is a trading name of Plata Capital Ltd. More information about Sokin’s services and how to sign up can be found on [sokin.com](https://sokin.com).
 
 #### Features
-- Easy installation and setup
-- Secure transactions
-- Support for multiple payment methods
-- Real-time transaction updates
-- Comprehensive customer support
+* Hosted checkout for Sokin payment methods enabled on your merchant account.
+* Payment-status checks when customers return from checkout.
+* Refund requests from the WooCommerce order screen.
 
-#### Data & privacy
+#### External services and privacy
 
-This plugin connects your WooCommerce store to Sokin’s ecommerce payment services. When a customer checks out using Sokin Pay, the plugin sends order and customer information to Sokin for the sole purpose of processing payments and refunds. This includes details such as the customer’s name, email address, billing address (and, when different, shipping address), order total, and currency.
+A Sokin merchant account with Sokin Checkout / Payment Acceptance enabled is required. Register at [Sokin](https://sokin.com/business/business-account-signup/) and contact your account manager or [Sokin support](https://support.sokin.com/) for API access and sandbox credentials. A paid service agreement may be required; installing this plugin does not create or activate a Sokin account.
 
-Sokin is a trading name of Plata Capital Ltd. For full details on how Sokin is regulated and how data is handled, please refer to the region-specific Terms & Conditions and related policies available on [sokin.com](https://sokin.com) and the [Sokin Legal](https://sokin.com/legal) page.
+The plugin connects to the API URL configured by the merchant:
+* At checkout, it sends the customer's name, email, billing address, order amount, currency, and return URL to create a Sokin payment order. A different shipping address is included when provided. The customer is then redirected to the configured Sokin Checkout URL to complete payment.
+* When the customer returns to the order-received page, the plugin requests the payment status using the Sokin order identifier.
+* When a merchant creates a refund in WooCommerce, the plugin requests the order details and sends the Sokin payment identifier and refund amount to Sokin.
+
+These requests use the merchant's API key. The plugin does not send analytics or telemetry on activation. Customer data is sent to provide the configured payment and refund service.
+
+Production service hosts are `payment-gateway.sokin.com` and `pay.sokin.com`; sandbox hosts are `payment-gateway.uat.sokin.com` and `pay.uat.sokin.com`. If Sokin supplies different endpoints for your account, confirm them with your account manager before use.
+
+* Privacy policy: [Sokin Global Privacy Policy](https://sokin.com/legal/privacy-policy).
+* Service terms: [Sokin legal terms and policies](https://sokin.com/legal). Use the terms applicable to your account and region, as provided during merchant onboarding.
+* Integration instructions: [Sokin Checkoutment Acceptance plugin guide](https://support.sokin.com/article/payment-acceptance-plugin).
 
 #### Configuration
 
-1. **Access Settings**
-   - Go to WooCommerce > Settings > Payments.
-   - Click on the name of the payment gateway to configure settings.
+1. Install and activate WooCommerce, then activate Sokin Checkout.
+2. Obtain an API key from the Sokin customer portal under Settings > Sokin Checkout API Configuration. Ask your account manager to enable this service if it is unavailable. Sandbox and production require their respective credentials.
+3. In WordPress, go to WooCommerce > Settings > Payments > Sokin Checkout.
+4. Set the customer-facing Title and optional Description, and enter your X API Key. Production Checkout URL and API URL are filled in by default. Both URLs and the API key must belong to the same environment; URLs must use HTTPS.
+5. For production, keep the default Checkout URL `https://pay.sokin.com/sokinpay/customerPay` and API URL `https://payment-gateway.sokin.com/api/services/v1`.
+6. For sandbox testing, use Checkout URL `https://pay.uat.sokin.com/sokinpay/customerPay` and API URL `https://payment-gateway.uat.sokin.com/api/services/v1`, with sandbox credentials supplied by Sokin.
+7. Select Enable Sokin Checkout, save changes, and test checkout with Sokin's sandbox test credentials. Confirm successful, declined, and cancelled payment behavior before switching to production credentials and URLs. Test refunds from a WooCommerce order screen using sandbox transactions.
 
-2. **Configure Payment Settings**
-   - Enter the necessary API keys and credentials.
-   - Save changes.
+Do not mix sandbox credentials with production URLs. Never enter real card details in a sandbox environment or share your API key publicly.
 
 #### Usage
 
-1. **Processing Payments**
-   - Customers can now select the Sokin payment gateway during checkout.
-   - Transactions are processed securely and updates are provided in real-time.
+Customers select Sokin Checkout at checkout and complete their payment on Sokin's hosted checkout page. When they return to the store, the plugin requests the payment status and updates the order. It does not provide background webhook synchronization or a dispute-management screen.
 
-2. **Transaction Management**
-   - View transaction details under WooCommerce > Orders.
-   - Process refunds and handle disputes directly from your WooCommerce dashboard.
+View orders and request refunds under WooCommerce > Orders. Handle disputes through the Sokin service or support channels available for your merchant account.
 
 #### Developer hooks
 
-Sokin Pay exposes checkout field extension points through plugin-prefixed hooks:
+Sokin Checkout exposes checkout field extension points through plugin-prefixed hooks:
 
 * `platasokin_credit_card_form_start`
 * `platasokin_credit_card_form_end`
 
-If your integration previously used `woocommerce_credit_card_form_start` or `woocommerce_credit_card_form_end` for Sokin Pay checkout customizations, update it to the `platasokin_*` hook names above.
+If your integration previously used `woocommerce_credit_card_form_start` or `woocommerce_credit_card_form_end` for Sokin Checkout checkout customizations, update it to the `platasokin_*` hook names above.
 
 #### Support
 For any issues or questions, please contact our support team at [support@sokin.com](mailto:support@sokin.com).
 
 == Installation ==
-* It is required to install WooCommerce plugin (https://wordpress.org/plugins/woocommerce) before Sokin Pay installation.
-* Upload the Sokin Pay plugin to your WordPress website, activate it, and then configure the API settings.
+* It is required to install WooCommerce plugin (https://wordpress.org/plugins/woocommerce) before Sokin Checkout installation.
+* Upload the Sokin Checkout plugin to your WordPress website, activate it, and then configure the API settings.
 
 == Frequently Asked Questions ==
-Is WooCommerce plugin mandatory for Sokin Pay plugin?
-Yes, Sokin Pay plugin is based on WooCommerce. It uses WooCommerce features and data.
+Is WooCommerce plugin mandatory for Sokin Checkout plugin?
+Yes, Sokin Checkout plugin is based on WooCommerce. It uses WooCommerce features and data.
 
 == Changelog ==
 
