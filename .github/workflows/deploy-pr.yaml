@@ -38,13 +38,30 @@ jobs:
           tags: ${{ secrets.ECR_URL }}:pr-${{ github.sha }}
 
   deploy:
+    concurrency:
+      group: wordpress-pr-${{ github.event.number }}
+      cancel-in-progress: false
+      queue: max
     runs-on: ubuntu-latest
     needs: [build]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Check PR state
+        id: pr_state
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            core.setOutput('open', pr.state === 'open');
+
       - name: Read deployment files
+        if: steps.pr_state.outputs.open == 'true'
         id: compose_file
         uses: actions/github-script@v9
         with:
@@ -56,6 +73,7 @@ jobs:
           result-encoding: string
 
       - name: Deploy via SSH
+        if: steps.pr_state.outputs.open == 'true'
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -93,6 +111,7 @@ jobs:
             docker-compose pull
             docker-compose up -d --force-recreate
       - name: Post PR Comment with Deployment URL
+        if: steps.pr_state.outputs.open == 'true'
         uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           message: |
