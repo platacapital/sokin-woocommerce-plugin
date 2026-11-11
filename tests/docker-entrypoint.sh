@@ -45,6 +45,13 @@ if [ ! -f /var/www/html/wp-config.php ]; then
                      --extra-php="\$_SERVER['HTTPS'] = 'on'; define('FORCE_SSL_ADMIN', true); define('WP_DEBUG', true); define('WP_DEBUG_LOG', true); define('WP_DEBUG_DISPLAY', true); @ini_set('display_errors', 1);"
 fi
 
+# Only deployments with a host scheduler disable page-triggered cron.
+if [ "${SOKIN_DISABLE_WP_CRON:-0}" = "1" ]; then
+    wp config set DISABLE_WP_CRON true --raw --type=constant
+else
+    wp config set DISABLE_WP_CRON false --raw --type=constant
+fi
+
 # --- 4. Install WordPress ---
 # A reliable way to check for a true installation is to see if the users table exists.
 if ! wp db tables 'wp_users' --skip-plugins --skip-themes --quiet; then

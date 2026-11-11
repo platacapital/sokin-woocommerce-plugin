@@ -10,6 +10,10 @@ permissions:
 
 jobs:
   teardown:
+    concurrency:
+      group: wordpress-pr-${{ github.event.number }}
+      cancel-in-progress: false
+      queue: max
     runs-on: ubuntu-latest
     environment:
       name: pr-deploy
@@ -21,7 +25,14 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
+            if [ ! -d ~/deployments-wordpress/pr-${{ github.event.number }} ]; then
+              exit 0
+            fi
             cd ~/deployments-wordpress/pr-${{ github.event.number }}
+            if [ -f manage-wp-cron.sh ]; then
+              bash manage-wp-cron.sh remove
+            fi
             docker-compose -p pr-${{ github.event.number }} down
             cd ..
             rm -rf pr-${{ github.event.number }}
