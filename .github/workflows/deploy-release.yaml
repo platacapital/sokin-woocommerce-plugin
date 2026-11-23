@@ -79,6 +79,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [build]
+    # id-token lets the Tailscale step join the tailnet via OIDC.
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -94,6 +98,15 @@ jobs:
             const content = fs.readFileSync('docker-compose.deploy.yml', 'utf8');
             return content;
           result-encoding: string
+
+      # The box only accepts SSH over Tailscale.
+      - name: Join tailnet
+        uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:plugins-ci
+          ping: ${{ secrets.EC2_HOST }}
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5

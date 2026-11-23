@@ -13,7 +13,20 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pr-deploy
+    # id-token lets the Tailscale step join the tailnet via OIDC.
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      # The box only accepts SSH over Tailscale.
+      - name: Join tailnet
+        uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:plugins-ci
+          ping: ${{ secrets.EC2_HOST }}
+
       - name: Teardown via SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
